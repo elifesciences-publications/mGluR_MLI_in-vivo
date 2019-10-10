@@ -2,6 +2,49 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2
 import pickle
+import pdb
+from ScanImageTiffReader import ScanImageTiffReader
+
+############################################################
+def readTimeStampOfRecording(tiffFile, nFrame):
+    desc = ScanImageTiffReader(tiffFile).description(nFrame)
+    keyWordIdx = desc.find('epoch')
+    dateString = re.split('\[|\]', desc[keyWordIdx:])
+    dateIdv = dateString[1].split()
+    # print(dateIdv)
+    unixStartTime = int(datetime.datetime(int(dateIdv[0]), int(dateIdv[1]), int(dateIdv[2]), int(dateIdv[3]), int(dateIdv[4]), int(float(dateIdv[5]))).strftime('%s'))
+    #
+    keyWordIdx = desc.find('frameTimestamps_sec')
+    splitString = re.split('=|\n', desc[keyWordIdx:])
+    frameTimestamps = float(splitString[1])
+
+    keyWordIdx = desc.find('acqTriggerTimestamps_sec')
+    splitString = re.split('=|\n', desc[keyWordIdx:])
+    acqTriggerTimestamps = float(splitString[1])
+
+    keyWordIdx = desc.find('frameNumberAcquisition')
+    splitString = re.split('=|\n', desc[keyWordIdx:])
+    frameNumberAcquisition = int(splitString[1])
+
+    keyWordIdx = desc.find('acquisitionNumbers')
+    splitString = re.split('=|\n', desc[keyWordIdx:])
+    acquisitionNumbers = int(splitString[1])
+
+    unixFrameTime = unixStartTime + frameTimestamps
+    # print(tiffFile,unixTime)
+    return ([frameNumberAcquisition, acquisitionNumbers, unixStartTime, unixFrameTime, frameTimestamps, acqTriggerTimestamps])
+
+def extractAndSaveCaTimeStamps(saveDir,tiffPaths):
+    timeStamps = []
+    for i in range(len(tiffPaths)):
+        data = ScanImageTiffReader(tiffPaths[i]).data()
+        fN = np.shape(data)[0]
+        #frameNumbers.append(fN)
+        for n in range(fN):
+            timeStamps.append(readTimeStampOfRecording(tiffPaths[i],n))
+
+    timeStampsA = np.asarray(timeStamps)
+    np.save(saveDir+'/suite2p/plane0/timeStamps.npy',timeStampsA)
 
 #########################################################
 # set parameters
@@ -15,10 +58,11 @@ beforeDrugDir = '2019.08.15_002_animal#1/animal#1_00000-00013/'
 afterDrugDir = '2019.08.15_002_animal#1/animal#1_00015-20_23-28/'
 suite2pDir = 'suite2p/plane0/'
 
-cutOffX = 8
-cutOffY = 19
+startBD = 0
+endBD =13
+nImgsBD = range(startBD,endBD+1)
+nImgsAD = [15,16,17,18,19,20,23,24,25,26,27,28]
 
-redoIntersections = False
 
 ##########################################################
 # read data and determine principal parameters
@@ -32,115 +76,81 @@ opsAD = np.load(baseDir + afterDrugDir + suite2pDir + 'ops.npy').item()
 iscellAD = np.load(baseDir + afterDrugDir + suite2pDir +'iscell.npy')
 ncellsAD = len(iscellAD)
 
-emptyImBD = np.zeros((opsBD['Ly'], opsBD['Lx']))
-emptyImAD = np.zeros((opsAD['Ly'], opsAD['Lx']))
-
-# Read the enhanced ROI images to be aligned
-imBD =  opsBD['meanImgE'][cutOffX:-cutOffX,cutOffY:-(cutOffY+1)]
-imAD =  opsAD['meanImgE'][cutOffX:-cutOffX,cutOffY:-(cutOffY+1)]
-
-warp_matrix = np.load(dataOutDir+'warp_matrix_%s.npy' % animalID)
+FBD = np.load(baseDir + beforeDrugDir + suite2pDir + 'F.npy')
+FneuBD = np.load(baseDir + beforeDrugDir + suite2pDir + 'Fneu.npy')
+FAD = np.load(baseDir + afterDrugDir + suite2pDir + 'F.npy')
+FneuAD = np.load(baseDir + afterDrugDir + suite2pDir + 'Fneu.npy')
 
 ###########################################################
-# read and match ROIs
+# read ROI matching results
+intersectionROIs = pickle.load(open( dataOutDir + 'ROIintersections_%s.p' % animalID, 'rb'))
 
-imMaskBD =  np.zeros((opsBD['Ly'], opsBD['Lx']))
-imMaskAD = np.zeros((opsAD['Ly'], opsAD['Lx']))
+# read time stamps
+timeStampsBD = []
+for n in nImgsBD:
+    tS = np.load(baseDir + beforeDrugDir + 'rawImages/%s_%05d_timeStamps.npy' % (animalID,n))
+    timeStampsBD.append([n,tS])
 
-if redoIntersections:
-    intersectionROIs = []
-    for n in range(0,ncellsBD):
-        imMaskBD[:] = 0
-        if iscellBD[n][0]==1:
-            ypixBD = statBD[n]['ypix']
-            xpixBD = statBD[n]['xpix']
-            imMaskBD[ypixBD,xpixBD] = 1
-            for m in range(0,ncellsAD):
-                imMaskAD[:] = 0
-                if iscellAD[m][0]==1:
-                    ypixAD = statAD[m]['ypix']
-                    xpixAD = statAD[m]['xpix']
-                    # perform eucledian transform
-                    xpixADPrime = xpixAD - np.rint(warp_matrix[0,2])
-                    ypixADPrime = ypixAD - np.rint(warp_matrix[1,2])
-                    xpixADPrime = np.array(xpixADPrime,dtype=int)
-                    ypixADPrime = np.array(ypixADPrime, dtype=int)
-                    # make sure pixels remain within
-                    xpixADPrime2 = xpixADPrime[(xpixADPrime<opsAD['Lx'])&(ypixADPrime<opsAD['Ly'])]
-                    ypixADPrime2 = ypixADPrime[(xpixADPrime<opsAD['Lx'])&(ypixADPrime<opsAD['Ly'])]
-                    imMaskAD[ypixADPrime2,xpixADPrime2] = 1
-                    intersection = np.sum(np.logical_and(imMaskBD,imMaskAD))
-                    eitherOr = np.sum(np.logical_or(imMaskBD,imMaskAD))
-                    if intersection>0:
-                        print(n,m,intersection,eitherOr,intersection/eitherOr)
-                        intersectionROIs.append([n,m,xpixBD,ypixBD,xpixADPrime2,ypixADPrime2,intersection,eitherOr,intersection/eitherOr])
+timeStampsAD = []
+for n in nImgsAD:
+    tS = np.load(baseDir + afterDrugDir + 'rawImages/%s_%05d_timeStamps.npy' % (animalID,n))
+    timeStampsAD.append([n,tS])
 
-
-    pickle.dump(intersectionROIs, open( dataOutDir + 'ROIintersections_%s.p' % animalID, 'wb' ) )
-else:
-    intersectionROIs = pickle.load(open( dataOutDir + 'ROIintersections_%s.p' % animalID, 'rb'))
+#pdb.set_trace()
 
 ##################################################################
 # Show final results
-fig = plt.figure(figsize=(10,15)) ########################
 
-ax0 = fig.add_subplot(3,2,1) #############################
-ax0.set_title('before drug')
-ax0.imshow(imBD)
+fig_width = 12 # width in inches
+fig_height = 8  # height in inches
+fig_size =  [fig_width,fig_height]
+params = {'axes.labelsize': 14,
+          'axes.titlesize': 13,
+          'font.size': 11,
+          'xtick.labelsize': 11,
+          'ytick.labelsize': 11,
+          'figure.figsize': fig_size,
+          'savefig.dpi' : 600,
+          'axes.linewidth' : 1.3,
+          'ytick.major.size' : 4,      # major tick size in points
+          'xtick.major.size' : 4      # major tick size in points
+          #'edgecolor' : None
+          #'xtick.major.size' : 2,
+          #'ytick.major.size' : 2,
+          }
+rcParams.update(params)
+# create figure instance
+fig = plt.figure()
 
-ax0 = fig.add_subplot(3,2,2) #############################
+# define sub-panel grid and possibly width and height ratios
+gs = gridspec.GridSpec(2, 2,
+                       width_ratios=[1,1.2],
+                       height_ratios=[1,1]
+                       )
+# define vertical and horizontal spacing between panels
+gs.update(wspace=0.3,hspace=0.4)
+
+# possibly change outer margins of the figure
+#plt.subplots_adjust(left=0.14, right=0.92, top=0.92, bottom=0.18)
+
+gssub0 = gridspec.GridSpecFromSubplotSpec(1, len(nImgsBD) , subplot_spec=gs[0],hspace=0.4)
+
+for n in range(nImgsBD):
+    ax0 = plt.subplot(gssub0[i])
+    for i in range(len(intersectionROIs)):
+        ax0.plot()
+
+
+for i in range(len(intersectionROIs)):
+    ax0.plot()
+
+
+ax0 = plt.subplot(gs[1]) #####################
 ax0.set_title('after drug')
-ax0.imshow(imAD)
 
-ax0 = fig.add_subplot(3,2,3) #############################
-ax0.set_title('ROIs before drug')
-imBD = np.zeros((opsBD['Ly'], opsBD['Lx']))
-
-for n in range(0,ncellsBD):
-    if iscellBD[n][0]==1:
-        ypixBD = statBD[n]['ypix']
-        xpixBD = statBD[n]['xpix']
-        imBD[ypixBD,xpixBD] = n+1
-
-ax0.imshow(imBD,cmap='gist_ncar')
-
-ax0 = fig.add_subplot(3,2,4) #############################
-ax0.set_title('ROIs after drug')
-imAD = np.zeros((opsAD['Ly'], opsAD['Lx']))
-
-for n in range(0,ncellsAD):
-    if iscellAD[n][0]==1:
-        ypixAD = statAD[n]['ypix']
-        xpixAD = statAD[n]['xpix']
-        imAD[ypixAD,xpixAD] = n+1
-
-ax0.imshow(imAD,cmap='gist_ncar')
+for i in range(len(intersectionROIs)):
 
 
-ax0 = fig.add_subplot(3,2,5)  #############################
-ax0.set_title('overlapping ROIs')
-imBD = np.zeros((opsBD['Ly'], opsBD['Lx']))
-imAD = np.zeros((opsAD['Ly'], opsAD['Lx']))
 
-for n in range(0,len(intersectionROIs)):
-
-    ypixBD = intersectionROIs[n][3]
-    xpixBD = intersectionROIs[n][2]
-    ypixAD = intersectionROIs[n][5]
-    xpixAD = intersectionROIs[n][4]
-    imBD[ypixBD,xpixBD] = 1
-    imAD[ypixAD,xpixAD] = 2
-
-overlayBothROIs = cv2.addWeighted(imBD, 1, imAD, 1, 0)
-ax0.imshow(overlayBothROIs)
-
-ax0 = fig.add_subplot(3,2,6)  #############################
-ax0.set_title('fraction of ROI overlap')
-interFractions = []
-for n in range(0,len(intersectionROIs)):
-    interFractions.append(intersectionROIs[n][8])
-
-ax0.hist(interFractions,bins=15)
-
-plt.savefig(figOutDir+'ROImatching_%s.pdf' % animalID)
+#plt.savefig(figOutDir+'FluorescenceTraces_%s.pdf' % animalID)
 plt.show()
