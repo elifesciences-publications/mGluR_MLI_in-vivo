@@ -4,6 +4,9 @@ import cv2
 import pickle
 import pdb
 from ScanImageTiffReader import ScanImageTiffReader
+from matplotlib import rcParams
+import matplotlib.gridspec as gridspec
+from scipy import integrate
 
 ############################################################
 def readTimeStampOfRecording(tiffFile, nFrame):
@@ -81,7 +84,7 @@ FneuBD = np.load(baseDir + beforeDrugDir + suite2pDir + 'Fneu.npy')
 FAD = np.load(baseDir + afterDrugDir + suite2pDir + 'F.npy')
 FneuAD = np.load(baseDir + afterDrugDir + suite2pDir + 'Fneu.npy')
 
-###########################################################
+#################################################################
 # read ROI matching results
 intersectionROIs = pickle.load(open( dataOutDir + 'ROIintersections_%s.p' % animalID, 'rb'))
 
@@ -98,6 +101,48 @@ for n in nImgsAD:
 
 #pdb.set_trace()
 
+#################################################################
+# calculate dF/F0 and integral
+
+minOverlap = 0.5
+startN  = 0
+baselineTime = 6.
+
+analysisBD = []
+integrals = []
+for i in range(len(intersectionROIs)):
+    if intersectionROIs[i][8]>minOverlap:
+        startNBD = 0
+        iE = []
+        for n in range(len(nImgsBD)):
+            tBD = timeStampsBD[n][1][:,1]
+            FBDsingle = FBD[intersectionROIs[i][0]][startNBD:(startNBD+len(timeStampsBD[n][1][:,1]))] - 0.7*FneuBD[intersectionROIs[i][0]][startNBD:(startNBD+len(timeStampsBD[n][1][:,1]))]
+            baselineMask = tBD < baselineTime
+            F0BD = np.mean(FBDsingle[baselineMask])
+            deltaBD = (FBDsingle-F0BD)/F0BD
+            integralBD = integrate.simps(deltaBD, tBD)
+            #analysisBD.append([n,i,intersectionROIs[i],tBD,FBD,F0BD,deltaBD,integralBD])
+            iE.append(integralBD)
+            startNBD += len(timeStampsBD[n][1])
+        startNAD = 0
+        for n in range(len(nImgsAD)):
+            tAD = timeStampsAD[n][1][:,1]
+            FADsingle = FAD[intersectionROIs[i][1]][startNAD:(startNAD+len(timeStampsAD[n][1][:,1]))] - 0.7*FneuAD[intersectionROIs[i][1]][startNAD:(startNAD+len(timeStampsAD[n][1][:,1]))]
+            baselineMask = tAD < baselineTime
+            F0AD = np.mean(FADsingle[baselineMask])
+            deltaAD = (FADsingle-F0AD)/F0AD
+            integralAD = integrate.simps(deltaAD, tAD)
+            #analysisBD.append([n,i,intersectionROIs[i],tBD,FBD,F0BD,deltaBD,integralBD])
+            iE.append(integralAD)
+            startNAD += len(timeStampsAD[n][1])
+        integrals.append(iE)
+
+integrals = np.asarray(integrals)
+#pdb.set_trace()
+for i in range(len(integrals)):
+    plt.plot([np.mean(integrals[i][:14]),np.mean(integrals[i][14:])])
+
+plt.show()
 ##################################################################
 # Show final results
 
@@ -123,9 +168,9 @@ rcParams.update(params)
 fig = plt.figure()
 
 # define sub-panel grid and possibly width and height ratios
-gs = gridspec.GridSpec(2, 2,
-                       width_ratios=[1,1.2],
-                       height_ratios=[1,1]
+gs = gridspec.GridSpec(2, 1,
+                       #width_ratios=[1,1.2],
+                       #height_ratios=[1,1]
                        )
 # define vertical and horizontal spacing between panels
 gs.update(wspace=0.3,hspace=0.4)
@@ -133,23 +178,57 @@ gs.update(wspace=0.3,hspace=0.4)
 # possibly change outer margins of the figure
 #plt.subplots_adjust(left=0.14, right=0.92, top=0.92, bottom=0.18)
 
-gssub0 = gridspec.GridSpecFromSubplotSpec(1, len(nImgsBD) , subplot_spec=gs[0],hspace=0.4)
+gssub0 = gridspec.GridSpecFromSubplotSpec(1, len(nImgsBD) , subplot_spec=gs[0],wspace=0.05)
 
-for n in range(nImgsBD):
-    ax0 = plt.subplot(gssub0[i])
-    for i in range(len(intersectionROIs)):
-        ax0.plot()
+startN = 0
+nInter = 0
+for n in range(len(nImgsBD)):
+    ax0 = plt.subplot(gssub0[n])
+    for i in range(20): #range(len(intersectionROIs)):
+        if intersectionROIs[i][8]>0.5:
+            ax0.plot(timeStampsBD[n][1][:,1],FBD[intersectionROIs[i][0]][startN:(startN+len(timeStampsBD[n][1]))]+i*50,lw=0.2)
+            if n==0:
+                nInter+=1
+    ax0.spines['top'].set_visible(False)
+    ax0.spines['right'].set_visible(False)
+    ax0.spines['bottom'].set_position(('outward', 10))
+    ax0.xaxis.set_ticks_position('bottom')
+    if n==0:
+        ax0.spines['left'].set_position(('outward', 10))
+        ax0.yaxis.set_ticks_position('left')
+        ax0.set_xlabel('time (s)')
+    else:
+        ax0.spines['left'].set_visible(False)
+        ax0.yaxis.set_visible(False) #set_ticks_position('left')
+    startN+=len(timeStampsBD[n][1])
+
+print('intersection with more than 0.5 ',nInter)
 
 
-for i in range(len(intersectionROIs)):
-    ax0.plot()
+gssub0 = gridspec.GridSpecFromSubplotSpec(1, len(nImgsAD) , subplot_spec=gs[1],wspace=0.05) #####################
+#ax0.set_title('after drug')
 
-
-ax0 = plt.subplot(gs[1]) #####################
-ax0.set_title('after drug')
-
-for i in range(len(intersectionROIs)):
-
+startN = 0
+nInter = 0
+for n in range(len(nImgsAD)):
+    ax0 = plt.subplot(gssub0[n])
+    for i in range(20): #range(len(intersectionROIs)):
+        if intersectionROIs[i][8]>0.5:
+            ax0.plot(timeStampsAD[n][1][:,1],FAD[intersectionROIs[i][1]][startN:(startN+len(timeStampsAD[n][1]))]+i*50,lw=0.2)
+            if n==0:
+                nInter+=1
+    ax0.spines['top'].set_visible(False)
+    ax0.spines['right'].set_visible(False)
+    ax0.spines['bottom'].set_position(('outward', 10))
+    ax0.xaxis.set_ticks_position('bottom')
+    if n==0:
+        ax0.spines['left'].set_position(('outward', 10))
+        ax0.yaxis.set_ticks_position('left')
+        ax0.set_xlabel('time (s)')
+    else:
+        ax0.spines['left'].set_visible(False)
+        ax0.yaxis.set_visible(False) #set_ticks_position('left')
+    startN+=len(timeStampsAD[n][1])
 
 
 #plt.savefig(figOutDir+'FluorescenceTraces_%s.pdf' % animalID)
