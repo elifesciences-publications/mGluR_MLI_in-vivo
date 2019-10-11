@@ -76,10 +76,25 @@ if redoIntersections:
                         print(n,m,intersection,eitherOr,intersection/eitherOr)
                         intersectionROIs.append([n,m,xpixBD,ypixBD,xpixADPrime2,ypixADPrime2,intersection,eitherOr,intersection/eitherOr])
 
-
     pickle.dump(intersectionROIs, open( dataOutDir + 'ROIintersections_%s.p' % animalID, 'wb' ) )
 else:
     intersectionROIs = pickle.load(open( dataOutDir + 'ROIintersections_%s.p' % animalID, 'rb'))
+
+##################################################################
+# extract and save time-stamps
+# read time stamps
+timeStampsBD = []
+for n in nImgsBD:
+    tS = np.load(baseDir + beforeDrugDir + 'rawImages/%s_%05d_timeStamps.npy' % (animalID,n))
+    timeStampsBD.append([n,tS])
+
+timeStampsAD = []
+for n in nImgsAD:
+    tS = np.load(baseDir + afterDrugDir + 'rawImages/%s_%05d_timeStamps.npy' % (animalID,n))
+    timeStampsAD.append([n,tS])
+
+pickle.dump(timeStampsBD, open( dataOutDir + 'timeStampsBeforeDrug_%s.p' % animalID, 'wb' ) )
+pickle.dump(timeStampsAD, open( dataOutDir + 'timeStampsAfterDrug_%s.p' % animalID, 'wb' ) )
 
 ##################################################################
 # Show final results
