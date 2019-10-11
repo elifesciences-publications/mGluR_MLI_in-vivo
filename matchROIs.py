@@ -21,6 +21,11 @@ cutOffY = 19
 
 redoIntersections = False
 
+startBD = 0
+endBD =13
+nImgsBD = range(startBD,endBD+1)
+nImgsAD = [15,16,17,18,19,20,23,24,25,26,27,28]
+
 ##########################################################
 # read data and determine principal parameters
 statBD = np.load(baseDir + beforeDrugDir + suite2pDir + 'stat.npy')

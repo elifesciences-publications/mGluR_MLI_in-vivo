@@ -62,12 +62,6 @@ beforeDrugDir = '2019.08.15_002_animal#1/animal#1_00000-00013/'
 afterDrugDir = '2019.08.15_002_animal#1/animal#1_00015-20_23-28/'
 suite2pDir = 'suite2p/plane0/'
 
-startBD = 0
-endBD =13
-nImgsBD = range(startBD,endBD+1)
-nImgsAD = [15,16,17,18,19,20,23,24,25,26,27,28]
-
-
 ##########################################################
 # read data and determine principal parameters
 statBD = np.load(baseDir + beforeDrugDir + suite2pDir + 'stat.npy')
