@@ -23,8 +23,8 @@ redoIntersections = False
 
 startBD = 0
 endBD =13
-nImgsBD = range(startBD,endBD+1)
-nImgsAD = [15,16,17,18,19,20,23,24,25,26,27,28]
+nImgsBD = [[0,'000-000'],[1,'000-001'],[2,'000-002'],[3,'000-003'],[4,'000-004'],[5,'000-005'],[6,'001-000'],[7,'001-001'],[8,'002-000'],[9,'002-001'],[10,'002-002'],[11,'002-003'],[12,'002-004'],[13,'002-005']] #range(startBD,endBD+1)
+nImgsAD = [[15,'004-000'],[16,'004-001'],[17,'004-002'],[18,'004-003'],[19,'004-004'],[20,'004-005'],[23,'007-000'],[24,'007-001'],[25,'007-002'],[26,'007-003'],[27,'007-004'],[28,'007-005']]
 
 ##########################################################
 # read data and determine principal parameters
@@ -89,17 +89,26 @@ else:
 # extract and save time-stamps
 # read time stamps
 timeStampsBD = []
-for n in nImgsBD:
-    tS = np.load(baseDir + beforeDrugDir + 'rawImages/%s_%05d_timeStamps.npy' % (animalID,n))
-    timeStampsBD.append([n,tS])
+wheelBD = []
+for i in range(len(nImgsBD)):
+    tS = np.load(baseDir + beforeDrugDir + 'rawImages/%s_%05d_timeStamps.npy' % (animalID,nImgsBD[i][0]))
+    timeStampsBD.append([nImgsBD[i][0],tS])
+    wa = np.load(baseDir + beforeDrugDir + 'rawImages/walkingActivity_%s_rec%s.p' % (beforeDrugDir[:14],nImgsBD[i][1]))
+    wheelBD.append([nImgsBD[i][0],wa])
 
 timeStampsAD = []
-for n in nImgsAD:
-    tS = np.load(baseDir + afterDrugDir + 'rawImages/%s_%05d_timeStamps.npy' % (animalID,n))
-    timeStampsAD.append([n,tS])
+wheelAD = []
+for i in range(len(nImgsAD)):
+    tS = np.load(baseDir + afterDrugDir + 'rawImages/%s_%05d_timeStamps.npy' % (animalID,nImgsAD[i][0]))
+    timeStampsAD.append([nImgsAD[i][0],tS])
+    wa = np.load(baseDir + afterDrugDir + 'rawImages/walkingActivity_%s_rec%s.p' % (beforeDrugDir[:14], nImgsAD[i][1]))
+    wheelAD.append([nImgsAD[i][0], wa])
 
 pickle.dump(timeStampsBD, open( dataOutDir + 'timeStampsBeforeDrug_%s.p' % animalID, 'wb' ) )
 pickle.dump(timeStampsAD, open( dataOutDir + 'timeStampsAfterDrug_%s.p' % animalID, 'wb' ) )
+
+pickle.dump(wheelBD, open( dataOutDir + 'wheelActivityBeforeDrug_%s.p' % animalID, 'wb' ) )
+pickle.dump(wheelAD, open( dataOutDir + 'wheelActivityAfterDrug_%s.p' % animalID, 'wb' ) )
 
 ##################################################################
 # Show final results
