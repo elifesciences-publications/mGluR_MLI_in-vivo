@@ -612,7 +612,7 @@ for i in range(len(integralEv)):
         ax0.plot(integralEv[i,0],integralEv[i,1],'o',ms=3,c='C0')
     elif integralEv[i,2]<0.01 and integralEv[i,3] == 0:
         ax0.plot(integralEv[i,0],integralEv[i,1],'o',ms=3,c='C1')
-    else:integralEv
+    else:
         ax0.plot(integralEv[i, 0], integralEv[i, 1], 'o',c='C2', ms=3,alpha=0.5)
 
 #from scipy.stats import linregress
