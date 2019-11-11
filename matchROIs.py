@@ -3,6 +3,21 @@ import matplotlib.pyplot as plt
 import cv2
 import pickle
 import pdb
+from animalSettings import animalSettings
+import sys
+
+
+try:
+    anim = sys.argv[1]
+except IndexError:
+    anim = 'animal#2'
+else:
+    pass
+
+aS = animalSettings(anim)
+aS.loadSettings()
+
+print('animal : ',aS.animalID)
 
 #########################################################
 # set parameters
@@ -10,42 +25,28 @@ import pdb
 dataOutDir = 'dataOutput/'
 figOutDir = 'figureOutput/'
 
-animalID = 'animal#1'
-baseDir = '/media/labo_rw/JINmGluR/'
-beforeDrugDir = '2019.08.15_002_animal#1/animal#1_00000-00013/'
-afterDrugDir = '2019.08.15_002_animal#1/animal#1_00015-20_23-28/'
-suite2pDir = 'suite2p/plane0/'
-
-cutOffX = 8
-cutOffY = 19
-
-redoIntersections = False
-
-startBD = 0
-endBD =13
-nImgsBD = [[0,'000-000'],[1,'000-001'],[2,'000-002'],[3,'000-003'],[4,'000-004'],[5,'000-005'],[6,'001-000'],[7,'001-001'],[8,'002-000'],[9,'002-001'],[10,'002-002'],[11,'002-003'],[12,'002-004'],[13,'002-005']] #range(startBD,endBD+1)
-nImgsAD = [[15,'004-000'],[16,'004-001'],[17,'004-002'],[18,'004-003'],[19,'004-004'],[20,'004-005'],[23,'007-000'],[24,'007-001'],[25,'007-002'],[26,'007-003'],[27,'007-004'],[28,'007-005']]
+redoIntersections = True
 
 ##########################################################
 # read data and determine principal parameters
-statBD = np.load(baseDir + beforeDrugDir + suite2pDir + 'stat.npy')
-opsBD = np.load(baseDir + beforeDrugDir + suite2pDir + 'ops.npy').item()
-iscellBD = np.load(baseDir + beforeDrugDir + suite2pDir +'iscell.npy')
+statBD = np.load(aS.baseDir + aS.beforeDrugDir + aS.suite2pDir + 'stat.npy')
+opsBD = np.load(aS.baseDir + aS.beforeDrugDir + aS.suite2pDir + 'ops.npy').item()
+iscellBD = np.load(aS.baseDir + aS.beforeDrugDir + aS.suite2pDir +'iscell.npy')
 ncellsBD = len(iscellBD)
 
-statAD = np.load(baseDir + afterDrugDir + suite2pDir + 'stat.npy')
-opsAD = np.load(baseDir + afterDrugDir + suite2pDir + 'ops.npy').item()
-iscellAD = np.load(baseDir + afterDrugDir + suite2pDir +'iscell.npy')
+statAD = np.load(aS.baseDir + aS.afterDrugDir + aS.suite2pDir + 'stat.npy')
+opsAD = np.load(aS.baseDir + aS.afterDrugDir + aS.suite2pDir + 'ops.npy').item()
+iscellAD = np.load(aS.baseDir + aS.afterDrugDir + aS.suite2pDir +'iscell.npy')
 ncellsAD = len(iscellAD)
 
 emptyImBD = np.zeros((opsBD['Ly'], opsBD['Lx']))
 emptyImAD = np.zeros((opsAD['Ly'], opsAD['Lx']))
 
 # Read the enhanced ROI images to be aligned
-imBD =  opsBD['meanImgE'][cutOffX:-cutOffX,cutOffY:-(cutOffY+1)]
-imAD =  opsAD['meanImgE'][cutOffX:-cutOffX,cutOffY:-(cutOffY+1)]
+imBD =  opsBD['meanImgE'][aS.cutOffX:-aS.cutOffX,aS.cutOffY:-(aS.cutOffY+1)]
+imAD =  opsAD['meanImgE'][aS.cutOffX:-aS.cutOffX,aS.cutOffY:-(aS.cutOffY+1)]
 
-warp_matrix = np.load(dataOutDir+'warp_matrix_%s.npy' % animalID)
+warp_matrix = np.load(dataOutDir+'warp_matrix_%s.npy' % aS.animalID)
 
 ###########################################################
 # read and match ROIs
@@ -81,38 +82,41 @@ if redoIntersections:
                         print(n,m,intersection,eitherOr,intersection/eitherOr)
                         intersectionROIs.append([n,m,xpixBD,ypixBD,xpixADPrime2,ypixADPrime2,intersection,eitherOr,intersection/eitherOr])
 
-    pickle.dump(intersectionROIs, open( dataOutDir + 'ROIintersections_%s.p' % animalID, 'wb' ) )
+    pickle.dump(intersectionROIs, open( dataOutDir + 'ROIintersections_%s.p' % aS.animalID, 'wb' ) )
 else:
-    intersectionROIs = pickle.load(open( dataOutDir + 'ROIintersections_%s.p' % animalID, 'rb'))
+    intersectionROIs = pickle.load(open( dataOutDir + 'ROIintersections_%s.p' % aS.animalID, 'rb'))
 
 ##################################################################
 # extract and save time-stamps
 # read time stamps
 timeStampsBD = []
 wheelBD = []
-for i in range(len(nImgsBD)):
-    tS = np.load(baseDir + beforeDrugDir + 'rawImages/%s_%05d_timeStamps.npy' % (animalID,nImgsBD[i][0]))
-    timeStampsBD.append([nImgsBD[i][0],tS])
-    wa = np.load(baseDir + beforeDrugDir + 'rawImages/walkingActivity_%s_rec%s.p' % (beforeDrugDir[:14],nImgsBD[i][1]))
-    wheelBD.append([nImgsBD[i][0],wa])
+for i in range(len(aS.nImgsBD)):
+    tS = np.load(aS.baseDir + aS.beforeDrugDir + 'rawImages/%s_%05d_timeStamps.npy' % (aS.animalID,aS.nImgsBD[i][0]))
+    timeStampsBD.append([aS.nImgsBD[i][0],tS])
+    wa = np.load(aS.baseDir + aS.beforeDrugDir + 'rawImages/walkingActivity_%s_rec%s.p' % (aS.beforeDrugDir[:14],aS.nImgsBD[i][1]))
+    wheelBD.append([aS.nImgsBD[i][0],wa])
 
 timeStampsAD = []
 wheelAD = []
-for i in range(len(nImgsAD)):
-    tS = np.load(baseDir + afterDrugDir + 'rawImages/%s_%05d_timeStamps.npy' % (animalID,nImgsAD[i][0]))
-    timeStampsAD.append([nImgsAD[i][0],tS])
-    wa = np.load(baseDir + afterDrugDir + 'rawImages/walkingActivity_%s_rec%s.p' % (beforeDrugDir[:14], nImgsAD[i][1]))
-    wheelAD.append([nImgsAD[i][0], wa])
+for i in range(len(aS.nImgsAD)):
+    tS = np.load(aS.baseDir + aS.afterDrugDir + 'rawImages/%s_%05d_timeStamps.npy' % (aS.animalID,aS.nImgsAD[i][0]))
+    #print(i,len(tS),aS.baseDir + aS.afterDrugDir + 'rawImages/%s_%05d_timeStamps.npy' % (aS.animalID,aS.nImgsAD[i][0]))
+    timeStampsAD.append([aS.nImgsAD[i][0],tS])
+    wa = np.load(aS.baseDir + aS.afterDrugDir + 'rawImages/walkingActivity_%s_rec%s.p' % (aS.beforeDrugDir[:14], aS.nImgsAD[i][1]))
+    wheelAD.append([aS.nImgsAD[i][0], wa])
 
-pickle.dump(timeStampsBD, open( dataOutDir + 'timeStampsBeforeDrug_%s.p' % animalID, 'wb' ) )
-pickle.dump(timeStampsAD, open( dataOutDir + 'timeStampsAfterDrug_%s.p' % animalID, 'wb' ) )
+pickle.dump(timeStampsBD, open( dataOutDir + 'timeStampsBeforeDrug_%s.p' % aS.animalID, 'wb' ) )
+pickle.dump(timeStampsAD, open( dataOutDir + 'timeStampsAfterDrug_%s.p' % aS.animalID, 'wb' ) )
 
-pickle.dump(wheelBD, open( dataOutDir + 'wheelActivityBeforeDrug_%s.p' % animalID, 'wb' ) )
-pickle.dump(wheelAD, open( dataOutDir + 'wheelActivityAfterDrug_%s.p' % animalID, 'wb' ) )
+pickle.dump(wheelBD, open( dataOutDir + 'wheelActivityBeforeDrug_%s.p' % aS.animalID, 'wb' ) )
+pickle.dump(wheelAD, open( dataOutDir + 'wheelActivityAfterDrug_%s.p' % aS.animalID, 'wb' ) )
 
 ##################################################################
 # Show final results
 fig = plt.figure(figsize=(10,15)) ########################
+
+plt.figtext(0.1, 0.95, '%s ' % (aS.animalID),clip_on=False, color='black', size=14)
 
 ax0 = fig.add_subplot(3,2,1) #############################
 ax0.set_title('before drug')
@@ -172,5 +176,6 @@ for n in range(0,len(intersectionROIs)):
 
 ax0.hist(interFractions,bins=15)
 
-plt.savefig(figOutDir+'ROImatching_%s.pdf' % animalID)
-plt.show()
+plt.savefig(figOutDir+'ROImatching_%s.pdf' % aS.animalID)
+#plt.savefig(figOutDir+'ROImatching_%s.png' % aS.animalID)
+#plt.show()

@@ -2,37 +2,43 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2
 import pdb
+from animalSettings import animalSettings
+import sys
+
+
+try:
+    anim = sys.argv[1]
+except IndexError:
+    anim = 'animal#2'
+else:
+    pass
+
+aS = animalSettings(anim)
+aS.loadSettings()
+
+print('animal : ',aS.animalID)
+
 
 #########################################################
 # set parameters
-
 dataOutDir = 'dataOutput/'
 figOutDir = 'figureOutput/'
 
-animalID = 'animal#1'
-baseDir = '/media/labo_rw/JINmGluR/'
-beforeDrugDir = '2019.08.15_002_animal#1/animal#1_00000-00013/'
-afterDrugDir = '2019.08.15_002_animal#1/animal#1_00015-20_23-28/'
-suite2pDir = 'suite2p/plane0/'
-
-cutOffX = 8
-cutOffY = 19
-
 ##########################################################
 # read data and determine principal parameters
-statBD = np.load(baseDir + beforeDrugDir + suite2pDir + 'stat.npy')
-opsBD = np.load(baseDir + beforeDrugDir + suite2pDir + 'ops.npy').item()
+statBD = np.load(aS.baseDir + aS.beforeDrugDir + aS.suite2pDir + 'stat.npy')
+opsBD = np.load(aS.baseDir + aS.beforeDrugDir + aS.suite2pDir + 'ops.npy').item()
 
-statAD = np.load(baseDir + afterDrugDir + suite2pDir + 'stat.npy')
-opsAD = np.load(baseDir + afterDrugDir + suite2pDir + 'ops.npy').item()
+statAD = np.load(aS.baseDir + aS.afterDrugDir + aS.suite2pDir + 'stat.npy')
+opsAD = np.load(aS.baseDir + aS.afterDrugDir + aS.suite2pDir + 'ops.npy').item()
 
 
 emptyImBD = np.zeros((opsBD['Ly'], opsBD['Lx']))
 emptyImAD = np.zeros((opsAD['Ly'], opsAD['Lx']))
 
 # Read the enhanced ROI images to be aligned
-imBD =  opsBD['meanImgE'][cutOffX:-cutOffX,cutOffY:-(cutOffY+1)]
-imAD =  opsAD['meanImgE'][cutOffX:-cutOffX,cutOffY:-(cutOffY+1)]
+imBD =  opsBD['meanImgE'][aS.cutOffX:-aS.cutOffX,aS.cutOffY:-(aS.cutOffY+1)]
+imAD =  opsAD['meanImgE'][aS.cutOffX:-aS.cutOffX,aS.cutOffY:-(aS.cutOffY+1)]
 
 ###########################################################
 # perform image alignment
@@ -53,8 +59,8 @@ if warp_mode == cv2.MOTION_HOMOGRAPHY:
 else:
     warp_matrix = np.eye(2, 3, dtype=np.float32)
 
-warp_matrix[0,2] = -30.
-warp_matrix[1,2] = 6.
+warp_matrix[0,2] = aS.xOffset
+warp_matrix[1,2] = aS.yOffset
 
 
 # Specify the number of iterations.
@@ -79,7 +85,7 @@ else:
 
 print('result of image alignment-> warp-matrix and correlation coefficient : ', warp_matrix, cc)
 
-np.save(dataOutDir+'warp_matrix_%s.npy' % animalID, warp_matrix)
+np.save(dataOutDir+'warp_matrix_%s.npy' % aS.animalID, warp_matrix)
 
 # for n in range(0,ncells):
 #     ypix = stat[n]['ypix'][~stat[n]['overlap']]
@@ -90,12 +96,14 @@ np.save(dataOutDir+'warp_matrix_%s.npy' % animalID, warp_matrix)
 # Show final results
 fig = plt.figure(figsize=(10,10))
 
+plt.figtext(0.1, 0.95, '%s ' % (aS.animalID),clip_on=False, color='black', size=14)
+
 ax0 = fig.add_subplot(2,2,1)
 ax0.set_title('before drug')
 ax0.imshow(imBD)
 
 ax0 = fig.add_subplot(2,2,2)
-ax0.set_title('before drug')
+ax0.set_title('after drug')
 ax0.imshow(imAD)
 
 ax0 = fig.add_subplot(2,2,3)
@@ -109,5 +117,6 @@ overlayAfter = cv2.addWeighted(imBD, 1, imAD_aligned, 1, 0)
 ax0.imshow(overlayAfter)
 
 
-plt.savefig(figOutDir+'ImageAlignment_%s.pdf' % animalID)
-plt.show()
+plt.savefig(figOutDir+'ImageAlignment_%s.pdf' % aS.animalID)
+#plt.savefig(figOutDir+'ImageAlignment_%s.png' % aS.animalID)
+#plt.show()
