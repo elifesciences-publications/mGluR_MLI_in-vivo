@@ -9,6 +9,8 @@ for a in animals:
     print('analyzing animal %s' % a)
     os.system('python alignImages.py %s' % a)
     os.system('python matchROIs.py %s' % a)
+    os.system('python readExtractTimeStamps.py %s' % a)
     os.system('python analyzeFluoTraces.py %s' % a)
+    os.system('python analyzeFlueTraces820nm.py %s' % a)
 
 

@@ -10,7 +10,7 @@ import sys
 try:
     anim = sys.argv[1]
 except IndexError:
-    anim = 'animal#2'
+    anim = 'animal#1_2'
 else:
     pass
 
@@ -39,20 +39,29 @@ opsAD = np.load(aS.baseDir + aS.afterDrugDir + aS.suite2pDir + 'ops.npy').item()
 iscellAD = np.load(aS.baseDir + aS.afterDrugDir + aS.suite2pDir +'iscell.npy')
 ncellsAD = len(iscellAD)
 
+stat820 = np.load(aS.baseDir + aS.eightTwentyDir + aS.suite2pDir + 'stat.npy')
+ops820 = np.load(aS.baseDir + aS.eightTwentyDir + aS.suite2pDir + 'ops.npy').item()
+iscell820 = np.load(aS.baseDir + aS.eightTwentyDir + aS.suite2pDir +'iscell.npy')
+ncells820 = len(iscell820)
+
 emptyImBD = np.zeros((opsBD['Ly'], opsBD['Lx']))
 emptyImAD = np.zeros((opsAD['Ly'], opsAD['Lx']))
+emptyIm820 = np.zeros((ops820['Ly'], ops820['Lx']))
 
 # Read the enhanced ROI images to be aligned
 imBD =  opsBD['meanImgE'][aS.cutOffX:-aS.cutOffX,aS.cutOffY:-(aS.cutOffY+1)]
 imAD =  opsAD['meanImgE'][aS.cutOffX:-aS.cutOffX,aS.cutOffY:-(aS.cutOffY+1)]
+im820 =  ops820['meanImgE'][aS.cutOffX:-aS.cutOffX,aS.cutOffY:-(aS.cutOffY+1)]
 
-warp_matrix = np.load(dataOutDir+'warp_matrix_%s.npy' % aS.animalID)
+warp_matrix1 = np.load(dataOutDir+'warp_matrix_%s.npy' % aS.animalID)
+warp_matrix2 = np.load(dataOutDir+'warp_matrix820_%s.npy' % aS.animalID)
 
 ###########################################################
 # read and match ROIs
 
 imMaskBD =  np.zeros((opsBD['Ly'], opsBD['Lx']))
 imMaskAD = np.zeros((opsAD['Ly'], opsAD['Lx']))
+imMask820 = np.zeros((ops820['Ly'], ops820['Lx']))
 
 if redoIntersections:
     intersectionROIs = []
@@ -68,8 +77,8 @@ if redoIntersections:
                     ypixAD = statAD[m]['ypix']
                     xpixAD = statAD[m]['xpix']
                     # perform eucledian transform
-                    xpixADPrime = xpixAD - np.rint(warp_matrix[0,2])
-                    ypixADPrime = ypixAD - np.rint(warp_matrix[1,2])
+                    xpixADPrime = xpixAD - np.rint(warp_matrix1[0,2])
+                    ypixADPrime = ypixAD - np.rint(warp_matrix1[1,2])
                     xpixADPrime = np.array(xpixADPrime,dtype=int)
                     ypixADPrime = np.array(ypixADPrime, dtype=int)
                     # make sure pixels remain within
@@ -83,50 +92,62 @@ if redoIntersections:
                         intersectionROIs.append([n,m,xpixBD,ypixBD,xpixADPrime2,ypixADPrime2,intersection,eitherOr,intersection/eitherOr])
 
     pickle.dump(intersectionROIs, open( dataOutDir + 'ROIintersections_%s.p' % aS.animalID, 'wb' ) )
+
+    #############
+    intersectionROIs_820 = []
+    for n in range(0, ncellsBD):
+        imMaskBD[:] = 0
+        if iscellBD[n][0] == 1:
+            ypixBD = statBD[n]['ypix']
+            xpixBD = statBD[n]['xpix']
+            imMaskBD[ypixBD, xpixBD] = 1
+            for m in range(0, ncells820):
+                imMask820[:] = 0
+                if iscell820[m][0] == 1:
+                    ypix820 = stat820[m]['ypix']
+                    xpix820 = stat820[m]['xpix']
+                    # perform eucledian transform
+                    xpix820Prime = xpix820 - np.rint(warp_matrix2[0, 2])
+                    ypix820Prime = ypix820 - np.rint(warp_matrix2[1, 2])
+                    xpix820Prime = np.array(xpix820Prime, dtype=int)
+                    ypix820Prime = np.array(ypix820Prime, dtype=int)
+                    # make sure pixels remain within
+                    xpix820Prime2 = xpix820Prime[(xpix820Prime < ops820['Lx']) & (ypix820Prime < ops820['Ly'])]
+                    ypix820Prime2 = ypix820Prime[(xpix820Prime < ops820['Lx']) & (ypix820Prime < ops820['Ly'])]
+                    imMask820[ypix820Prime2, xpix820Prime2] = 1
+                    intersection = np.sum(np.logical_and(imMaskBD, imMask820))
+                    eitherOr = np.sum(np.logical_or(imMaskBD, imMask820))
+                    if intersection > 0:
+                        print(n, m, intersection, eitherOr, intersection / eitherOr)
+                        intersectionROIs_820.append([n, m, xpixBD, ypixBD, xpix820Prime2, ypix820Prime2, intersection, eitherOr, intersection / eitherOr])
+
+    pickle.dump(intersectionROIs_820, open(dataOutDir + 'ROIintersections820_%s.p' % aS.animalID, 'wb'))
+
 else:
     intersectionROIs = pickle.load(open( dataOutDir + 'ROIintersections_%s.p' % aS.animalID, 'rb'))
+    intersectionROIs_820 = pickle.load(open( dataOutDir + 'ROIintersections820_%s.p' % aS.animalID, 'rb'))
 
-##################################################################
-# extract and save time-stamps
-# read time stamps
-timeStampsBD = []
-wheelBD = []
-for i in range(len(aS.nImgsBD)):
-    tS = np.load(aS.baseDir + aS.beforeDrugDir + 'rawImages/%s_%05d_timeStamps.npy' % (aS.animalID,aS.nImgsBD[i][0]))
-    timeStampsBD.append([aS.nImgsBD[i][0],tS])
-    wa = np.load(aS.baseDir + aS.beforeDrugDir + 'rawImages/walkingActivity_%s_rec%s.p' % (aS.beforeDrugDir[:14],aS.nImgsBD[i][1]))
-    wheelBD.append([aS.nImgsBD[i][0],wa])
 
-timeStampsAD = []
-wheelAD = []
-for i in range(len(aS.nImgsAD)):
-    tS = np.load(aS.baseDir + aS.afterDrugDir + 'rawImages/%s_%05d_timeStamps.npy' % (aS.animalID,aS.nImgsAD[i][0]))
-    #print(i,len(tS),aS.baseDir + aS.afterDrugDir + 'rawImages/%s_%05d_timeStamps.npy' % (aS.animalID,aS.nImgsAD[i][0]))
-    timeStampsAD.append([aS.nImgsAD[i][0],tS])
-    wa = np.load(aS.baseDir + aS.afterDrugDir + 'rawImages/walkingActivity_%s_rec%s.p' % (aS.beforeDrugDir[:14], aS.nImgsAD[i][1]))
-    wheelAD.append([aS.nImgsAD[i][0], wa])
-
-pickle.dump(timeStampsBD, open( dataOutDir + 'timeStampsBeforeDrug_%s.p' % aS.animalID, 'wb' ) )
-pickle.dump(timeStampsAD, open( dataOutDir + 'timeStampsAfterDrug_%s.p' % aS.animalID, 'wb' ) )
-
-pickle.dump(wheelBD, open( dataOutDir + 'wheelActivityBeforeDrug_%s.p' % aS.animalID, 'wb' ) )
-pickle.dump(wheelAD, open( dataOutDir + 'wheelActivityAfterDrug_%s.p' % aS.animalID, 'wb' ) )
 
 ##################################################################
 # Show final results
-fig = plt.figure(figsize=(10,15)) ########################
+fig = plt.figure(figsize=(15,15)) ########################
 
 plt.figtext(0.1, 0.95, '%s ' % (aS.animalID),clip_on=False, color='black', size=14)
 
-ax0 = fig.add_subplot(3,2,1) #############################
+ax0 = fig.add_subplot(4,3,1) #############################
 ax0.set_title('before drug')
 ax0.imshow(imBD)
 
-ax0 = fig.add_subplot(3,2,2) #############################
+ax0 = fig.add_subplot(4,3,2) #############################
 ax0.set_title('after drug')
 ax0.imshow(imAD)
 
-ax0 = fig.add_subplot(3,2,3) #############################
+ax0 = fig.add_subplot(4,3,3) #############################
+ax0.set_title('820 nm run')
+ax0.imshow(im820)
+
+ax0 = fig.add_subplot(4,3,4) #############################
 ax0.set_title('ROIs before drug')
 imBD = np.zeros((opsBD['Ly'], opsBD['Lx']))
 
@@ -138,7 +159,7 @@ for n in range(0,ncellsBD):
 
 ax0.imshow(imBD,cmap='gist_ncar')
 
-ax0 = fig.add_subplot(3,2,4) #############################
+ax0 = fig.add_subplot(4,3,5) #############################
 ax0.set_title('ROIs after drug')
 imAD = np.zeros((opsAD['Ly'], opsAD['Lx']))
 
@@ -150,9 +171,21 @@ for n in range(0,ncellsAD):
 
 ax0.imshow(imAD,cmap='gist_ncar')
 
+ax0 = fig.add_subplot(4,3,6) #############################
+ax0.set_title('ROIs at 820')
+im820 = np.zeros((ops820['Ly'], ops820['Lx']))
 
-ax0 = fig.add_subplot(3,2,5)  #############################
-ax0.set_title('overlapping ROIs')
+for n in range(0,ncells820):
+    if iscell820[n][0]==1:
+        ypix820 = stat820[n]['ypix']
+        xpix820 = stat820[n]['xpix']
+        im820[ypix820,xpix820] = n+1
+
+ax0.imshow(im820,cmap='gist_ncar')
+
+
+ax0 = fig.add_subplot(4,3,8)  #############################
+ax0.set_title('overlapping ROIs BD-AD')
 imBD = np.zeros((opsBD['Ly'], opsBD['Lx']))
 imAD = np.zeros((opsAD['Ly'], opsAD['Lx']))
 
@@ -165,16 +198,43 @@ for n in range(0,len(intersectionROIs)):
     imBD[ypixBD,xpixBD] = 1
     imAD[ypixAD,xpixAD] = 2
 
-overlayBothROIs = cv2.addWeighted(imBD, 1, imAD, 1, 0)
-ax0.imshow(overlayBothROIs)
+overlayBothROIs1 = cv2.addWeighted(imBD, 1, imAD, 1, 0)
+ax0.imshow(overlayBothROIs1)
 
-ax0 = fig.add_subplot(3,2,6)  #############################
-ax0.set_title('fraction of ROI overlap')
-interFractions = []
+ax0 = fig.add_subplot(4,3,9)  #############################
+ax0.set_title('overlapping ROIs BD-820')
+imBD = np.zeros((opsBD['Ly'], opsBD['Lx']))
+im820 = np.zeros((ops820['Ly'], ops820['Lx']))
+
+for n in range(0,len(intersectionROIs_820)):
+
+    ypixBD = intersectionROIs_820[n][3]
+    xpixBD = intersectionROIs_820[n][2]
+    ypix820 = intersectionROIs_820[n][5]
+    xpix820 = intersectionROIs_820[n][4]
+    imBD[ypixBD,xpixBD] = 1
+    im820[ypix820,xpix820] = 2
+
+overlayBothROIs2 = cv2.addWeighted(imBD, 1, im820, 1, 0)
+ax0.imshow(overlayBothROIs2)
+
+ax0 = fig.add_subplot(4,3,11)  #############################
+ax0.set_title('fraction of ROI overlap BD-AD')
+interFractions1 = []
 for n in range(0,len(intersectionROIs)):
-    interFractions.append(intersectionROIs[n][8])
+    interFractions1.append(intersectionROIs[n][8])
 
-ax0.hist(interFractions,bins=15)
+ax0.hist(interFractions1,bins=15)
+
+ax0 = fig.add_subplot(4,3,12)  #############################
+ax0.set_title('fraction of ROI overlap BD-820')
+interFractions2 = []
+for n in range(0,len(intersectionROIs_820)):
+    interFractions2.append(intersectionROIs_820[n][8])
+
+ax0.hist(interFractions2,bins=15)
+
+
 
 plt.savefig(figOutDir+'ROImatching_%s.pdf' % aS.animalID)
 #plt.savefig(figOutDir+'ROImatching_%s.png' % aS.animalID)

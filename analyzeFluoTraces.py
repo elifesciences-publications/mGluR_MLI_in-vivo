@@ -10,54 +10,14 @@ from scipy import integrate
 from scipy import stats
 import sys
 
+
 from animalSettings import animalSettings
 import graphicTools as GT
-
-############################################################
-def readTimeStampOfRecording(tiffFile, nFrame):
-    desc = ScanImageTiffReader(tiffFile).description(nFrame)
-    keyWordIdx = desc.find('epoch')
-    dateString = re.split('\[|\]', desc[keyWordIdx:])
-    dateIdv = dateString[1].split()
-    # print(dateIdv)
-    unixStartTime = int(datetime.datetime(int(dateIdv[0]), int(dateIdv[1]), int(dateIdv[2]), int(dateIdv[3]), int(dateIdv[4]), int(float(dateIdv[5]))).strftime('%s'))
-    #
-    keyWordIdx = desc.find('frameTimestamps_sec')
-    splitString = re.split('=|\n', desc[keyWordIdx:])
-    frameTimestamps = float(splitString[1])
-
-    keyWordIdx = desc.find('acqTriggerTimestamps_sec')
-    splitString = re.split('=|\n', desc[keyWordIdx:])
-    acqTriggerTimestamps = float(splitString[1])
-
-    keyWordIdx = desc.find('frameNumberAcquisition')
-    splitString = re.split('=|\n', desc[keyWordIdx:])
-    frameNumberAcquisition = int(splitString[1])
-
-    keyWordIdx = desc.find('acquisitionNumbers')
-    splitString = re.split('=|\n', desc[keyWordIdx:])
-    acquisitionNumbers = int(splitString[1])
-
-    unixFrameTime = unixStartTime + frameTimestamps
-    # print(tiffFile,unixTime)
-    return ([frameNumberAcquisition, acquisitionNumbers, unixStartTime, unixFrameTime, frameTimestamps, acqTriggerTimestamps])
-
-def extractAndSaveCaTimeStamps(saveDir,tiffPaths):
-    timeStamps = []
-    for i in range(len(tiffPaths)):
-        data = ScanImageTiffReader(tiffPaths[i]).data()
-        fN = np.shape(data)[0]
-        #frameNumbers.append(fN)
-        for n in range(fN):
-            timeStamps.append(readTimeStampOfRecording(tiffPaths[i],n))
-
-    timeStampsA = np.asarray(timeStamps)
-    np.save(saveDir+'/suite2p/plane0/timeStamps.npy',timeStampsA)
 
 try:
     anim = sys.argv[1]
 except IndexError:
-    anim = 'animal#1'
+    anim = 'animal#1_2'
 else:
     pass
 
@@ -113,10 +73,11 @@ wheelActivityAD = pickle.load(open( dataOutDir + 'wheelActivityAfterDrug_%s.p' %
 #################################################################
 # calculate dF/F0 and integral
 
+# moved to the parameter file
+# baselineTime = 5.
+# activityTimes = [10.,25.]
 
-startN  = 0
-baselineTime = 5.
-activityTimes = [10.,25.]
+# waitTrialsAfterDrug = 3
 
 mA = []
 F0MeanBD = []
@@ -129,15 +90,15 @@ for n in range(len(timeStampsBD)):  # loop over all recordings before drug deliv
     #
     twheelBD = wheelActivityBD[n][1][4]  # times of angles
     wActivityBD = (wheelActivityBD[n][1][3]) * 80. / 360.  # progress of animal angles conerted to  cm
-    baselineWheelMask = twheelBD < baselineTime
-    meanAct = np.sum(np.fabs(wActivityBD[baselineWheelMask]))
+    baselineWheelMask = twheelBD < aS.baselineTime
+    meanAct = np.mean(np.fabs(wActivityBD[baselineWheelMask]))
     meanActBD.append(meanAct)
 
 for n in range(len(timeStampsAD)):
     twheelAD = wheelActivityAD[n][1][4]
     wActivityAD = (wheelActivityAD[n][1][3]) * 80. / 360. # progress of animal angles conerted to  cm
-    baselineWheelMask = twheelAD < baselineTime
-    meanAct = np.sum(np.fabs(wActivityAD[baselineWheelMask]))
+    baselineWheelMask = twheelAD < aS.baselineTime
+    meanAct = np.mean(np.fabs(wActivityAD[baselineWheelMask]))
     meanActAD.append(meanAct)
 
 # determine with recording serves as F0
@@ -152,22 +113,22 @@ minTrialNumber = 1
 for i in range(len(timeStampsBD)):
     for per in aS.baselinePeriodsBD :
         if per[0]<=i and i<=per[1]:
-            threshold = 20.
-            slowRecMask = [0,0]
+            threshold = 0.
+            slowRecMask = [0,0] # first mask which should simply add to zero
             while sum(slowRecMask)<minTrialNumber:
                 slowRecMask = (meanActBD < threshold) & ((np.arange(len(timeStampsBD)) >= per[0]) & (np.arange(len(timeStampsBD)) <= per[1]))  #meanActBD[per[0]:per[1]+1] < 100.
-                threshold+=20
+                threshold+=0.0001
             #print('slow BDslowRecMask)
             baselinePeriodBD.append([i,slowRecMask])
 
 for i in range(len(timeStampsAD)):
     for per in aS.baselinePeriodsAD :
         if per[0]<=i and i<=per[1]:
-            threshold = 20.
-            slowRecMask = [0,0]
+            threshold = 0.
+            slowRecMask = [0,0] # first mask which should simply add to zero
             while sum(slowRecMask)<minTrialNumber:
                 slowRecMask = (meanActAD < threshold) & ((np.arange(len(timeStampsAD)) >= per[0]) & (np.arange(len(timeStampsAD)) <= per[1]))  #meanActBD[per[0]:per[1]+1] < 100.
-                threshold+=20
+                threshold+=0.0001
             #print(slowRecMask)
             baselinePeriodAD.append([i,slowRecMask])
 
@@ -177,6 +138,8 @@ print('AD :', baselinePeriodAD)
 
 # determine F0 for non-active trials
 nIntersection = 0
+#F0allROIsBD = []
+#F0allROIsAD = []
 for i in range(len(intersectionROIs)): # loop over all ROIs
     if intersectionROIs[i][8]>aS.minOverlap: # only consider ROIs with minimal overlap
         startNBD = 0
@@ -185,35 +148,37 @@ for i in range(len(intersectionROIs)): # loop over all ROIs
         for n in range(len(timeStampsBD)): # loop over all recordings
             tBD = timeStampsBD[n][1][:, 1]
             FBDsingle = FBD[intersectionROIs[i][0]][startNBD:(startNBD + len(timeStampsBD[n][1][:, 1]))] - 0.7 * FneuBD[intersectionROIs[i][0]][startNBD:(startNBD + len(timeStampsBD[n][1][:, 1]))]
-            baselineMask = tBD < baselineTime  # only take period before motorization
+            baselineMask = tBD < aS.baselineTime  # only take period before motorization
             F0MBD = np.mean(FBDsingle[baselineMask]) # calculate mean of fluorescence during that period
             startNBD += len(timeStampsBD[n][1])
             F0perROIBD.append([n,F0MBD])
         F0perROIBD = np.asarray(F0perROIBD)
+        #F0allROIsBD.append(F0perROIBD[:,1])
         F0perRecBD = []
         for n in range(len(timeStampsBD)): # loop over all recordings again to calculate mean F0 per recording
             #pdb.set_trace()
             F0m = np.mean(F0perROIBD[baselinePeriodBD[n][1]],axis=0)[1]
             F0perRecBD.append([n,F0m])
         #pdb.set_trace()
-        F0MeanBD.append([i,nIntersection,F0perRecBD])
+        F0MeanBD.append([i, nIntersection, F0perRecBD,F0perROIBD[:,1]])
         ######## after drug
         startNAD = 0
         F0perROIAD = []
         for n in range(len(timeStampsAD)):
             tAD = timeStampsAD[n][1][:, 1]
             FADsingle = FAD[intersectionROIs[i][1]][startNAD:(startNAD + len(timeStampsAD[n][1][:, 1]))] - 0.7 * FneuAD[intersectionROIs[i][1]][startNAD:(startNAD + len(timeStampsAD[n][1][:, 1]))]
-            baselineMask = tAD < baselineTime
+            baselineMask = tAD < aS.baselineTime
             F0MAD = np.mean(FADsingle[baselineMask])
             startNAD += len(timeStampsAD[n][1])
             F0perROIAD.append([n,F0MAD])
         F0perROIAD = np.asarray(F0perROIAD)
+        #F0allROIsAD.append(F0perROIAD[:, 1])
         F0perRecAD = []
         for n in range(len(timeStampsAD)):  # loop over all recordings again to calculate mean F0 per recording
             #pdb.set_trace()
             F0m = np.mean(F0perROIAD[baselinePeriodAD[n][1]],axis=0)[1]
             F0perRecAD.append([n, F0m])
-        F0MeanAD.append([i, nIntersection, F0perRecAD])
+        F0MeanAD.append([i, nIntersection, F0perRecAD,F0perROIAD[:, 1]])
         #####
         nIntersection+=1
 
@@ -222,13 +187,14 @@ for i in range(len(intersectionROIs)): # loop over all ROIs
 analysisBAndAD = []
 nIntersection = 0
 for i in range(len(intersectionROIs)):
+    useInAnalysis = True
     if intersectionROIs[i][8]>aS.minOverlap:
         startNBD = 0
         beforeDrugAnalysis = []
         for n in range(len(timeStampsBD)):
             tBD = timeStampsBD[n][1][:,1]
             FBDsingle = FBD[intersectionROIs[i][0]][startNBD:(startNBD+len(timeStampsBD[n][1][:,1]))] - 0.7*FneuBD[intersectionROIs[i][0]][startNBD:(startNBD+len(timeStampsBD[n][1][:,1]))]
-            #baselineMask = tBD < baselineTime
+            #baselineMask = tBD < aS.baselineTime
             #F0BD = np.mean(FBDsingle[baselineMask])
             #F0BD = F0MeanBD[nIntersection]
             #if nIntersection != F0BD[1]:
@@ -241,11 +207,15 @@ for i in range(len(intersectionROIs)):
                 print('problem')
             deltaBD = (FBDsingle - F0)
             deltaBDF0 = (FBDsingle-F0)/np.abs(F0)
-            activityMask = (tBD > activityTimes[0]) & (tBD < activityTimes[1])
+            if F0<aS.F0minimum:
+                print('excluded BD F0:',F0)
+                useInAnalysis = False
+            activityMask = (tBD > aS.activityTimes[0]) & (tBD < aS.activityTimes[1])
             integralBD = integrate.simps(deltaBDF0[activityMask], tBD[activityMask])
             #integralBD = np.sum(deltaBD)
-            FActivityBD = np.mean(deltaBDF0[activityMask])
-            beforeDrugAnalysis.append([n,integralBD,FActivityBD,F0,np.column_stack((tBD,FBDsingle,deltaBDF0,deltaBD))])
+            #FActivityBD = np.mean(deltaBDF0[activityMask])
+            FActivityBD = np.percentile(deltaBDF0[activityMask],75)
+            beforeDrugAnalysis.append([n,integralBD,FActivityBD,F0,np.column_stack((tBD,FBDsingle,deltaBDF0,deltaBD)),F0Container])
             #iE.append(integralBD)
             startNBD += len(timeStampsBD[n][1])
         startNAD = 0
@@ -254,7 +224,7 @@ for i in range(len(intersectionROIs)):
             tAD = timeStampsAD[n][1][:,1]
             #pdb.set_trace()
             FADsingle = FAD[intersectionROIs[i][1]][startNAD:(startNAD+len(timeStampsAD[n][1][:,1]))] - 0.7*FneuAD[intersectionROIs[i][1]][startNAD:(startNAD+len(timeStampsAD[n][1][:,1]))]
-            #baselineMask = tAD < baselineTime
+            #baselineMask = tAD < aS.baselineTime
             #F0AD = F0MeanAD[nIntersections]
             #if nIntersections != F0AD[1]:
             #    print('problem')
@@ -266,15 +236,20 @@ for i in range(len(intersectionROIs)):
                 print('problem')
             deltaAD = (FADsingle-F0)
             deltaADF0 = (FADsingle-F0)/np.abs(F0)
-            activityMask = (tAD > activityTimes[0]) & (tAD < activityTimes[1])
+            if F0<aS.F0minimum:
+                print('excluded AD F0:',F0)
+                useInAnalysis = False
+            activityMask = (tAD > aS.activityTimes[0]) & (tAD < aS.activityTimes[1])
             #pdb.set_trace()
             #print(n)
             integralAD = integrate.simps(deltaADF0[activityMask],tAD[activityMask])
             #integralAD = np.sum(deltaAD[activityMask])
-            FActivityAD = np.mean(deltaADF0[activityMask])
-            afterDrugAnalysis.append([n, integralAD, FActivityAD, F0, np.column_stack((tAD, FADsingle, deltaADF0, deltaAD))])
+            #FActivityAD = np.mean(deltaADF0[activityMask])
+            FActivityAD = np.percentile(deltaADF0[activityMask], 75)
+            afterDrugAnalysis.append([n, integralAD, FActivityAD, F0, np.column_stack((tAD, FADsingle, deltaADF0, deltaAD)),F0Container])
             startNAD += len(timeStampsAD[n][1])
-        analysisBAndAD.append([intersectionROIs[i],beforeDrugAnalysis,afterDrugAnalysis])
+        if useInAnalysis:
+            analysisBAndAD.append([intersectionROIs[i],beforeDrugAnalysis,afterDrugAnalysis])
         nIntersection += 1
 
 #pdb.set_trace()
@@ -517,15 +492,16 @@ for i in range(len(analysisBAndAD)):
 
     integralTrendCorrected = (integral - integralFit)#+np.mean(integral[:trialsBeforeDrug])
     activityTrendCorrected = (activity - activityFit)#+np.mean(activity[:trialsBeforeDrug])
+    activityTrendCorrectedRenormalized = (activity - activityFit) +np.mean(activity[:trialsBeforeDrug])
     downInt = -1
-    tttInt = stats.ttest_ind(integralTrendCorrected[:trialsBeforeDrug], integralTrendCorrected[(trialsBeforeDrug + 3):])
-    tttAct = stats.ttest_ind(activityTrendCorrected[:trialsBeforeDrug], activityTrendCorrected[(trialsBeforeDrug + 3):])
+    tttInt = stats.ttest_ind(integralTrendCorrected[:trialsBeforeDrug], integralTrendCorrected[(trialsBeforeDrug + aS.waitTrialsAfterDrug):])
+    tttAct = stats.ttest_ind(activityTrendCorrected[:trialsBeforeDrug], activityTrendCorrected[(trialsBeforeDrug + aS.waitTrialsAfterDrug):])
 
 
-    if tttInt[1] < 0.01 and (np.mean(integralTrendCorrected[:trialsBeforeDrug]) > np.mean(integralTrendCorrected[(trialsBeforeDrug + 3):])):
+    if tttInt[1] < 0.01 and (np.mean(integralTrendCorrected[:trialsBeforeDrug]) > np.mean(integralTrendCorrected[(trialsBeforeDrug + aS.waitTrialsAfterDrug):])):
         nChangeDOWN += 1
         downInt = 1
-    elif tttInt[1] < 0.01 and (np.mean(integralTrendCorrected[:trialsBeforeDrug]) < np.mean(integralTrendCorrected[(trialsBeforeDrug + 3):])):
+    elif tttInt[1] < 0.01 and (np.mean(integralTrendCorrected[:trialsBeforeDrug]) < np.mean(integralTrendCorrected[(trialsBeforeDrug + aS.waitTrialsAfterDrug):])):
         nChangeUP += 1
         downInt = 0
     else:
@@ -533,18 +509,18 @@ for i in range(len(analysisBAndAD)):
         downInt = 2
 
     downAct = -1
-    if tttAct[1] < 0.01 and (np.mean(activityTrendCorrected[:trialsBeforeDrug]) > np.mean(activityTrendCorrected[(trialsBeforeDrug + 3):])):
+    if tttAct[1] < 0.01 and (np.mean(activityTrendCorrected[:trialsBeforeDrug]) > np.mean(activityTrendCorrected[(trialsBeforeDrug + aS.waitTrialsAfterDrug):])):
         nChangeDOWNAct += 1
         downAct = 1
-    elif tttInt[1] < 0.01 and (np.mean(activityTrendCorrected[:trialsBeforeDrug]) < np.mean(activityTrendCorrected[(trialsBeforeDrug + 3):])):
+    elif tttInt[1] < 0.01 and (np.mean(activityTrendCorrected[:trialsBeforeDrug]) < np.mean(activityTrendCorrected[(trialsBeforeDrug + aS.waitTrialsAfterDrug):])):
         nChangeUPAct += 1
         downAct = 0
     else:
         nNoChangeAct += 1
         downAct = 2
 
-    integralEv.append([np.mean(integral[:trialsBeforeDrug]), np.mean(integralTrendCorrected[(trialsBeforeDrug+3):]),tttInt[1],downInt])
-    activityEv.append([np.mean(activity[:trialsBeforeDrug]), np.mean(activityTrendCorrected[(trialsBeforeDrug+3):]),tttAct[1],downAct])
+    integralEv.append([np.mean(integral[:trialsBeforeDrug]), np.mean(integralTrendCorrected[(trialsBeforeDrug+aS.waitTrialsAfterDrug):]),tttInt[1],downInt])
+    activityEv.append([np.mean(activity[:trialsBeforeDrug]), np.mean(activityTrendCorrected[(trialsBeforeDrug+aS.waitTrialsAfterDrug):]),tttAct[1],downAct,np.mean(activityTrendCorrectedRenormalized[:trialsBeforeDrug]),np.mean(activityTrendCorrectedRenormalized[(trialsBeforeDrug+aS.waitTrialsAfterDrug):])])
     F0Ev.append([np.mean(F0[:trialsBeforeDrug]), np.mean(F0[trialsBeforeDrug:])])
 
     if i==0:
@@ -555,10 +531,14 @@ for i in range(len(analysisBAndAD)):
         ax0.plot(range(1,trialsBeforeDrug+trialsAfterDrug+1),integral,'o-',ms=2,c=mColors[i%10],alpha=0.3)
         ax1.plot(range(1,trialsBeforeDrug+trialsAfterDrug+1),activity,'o-',ms=2,c=mColors[i%10],alpha=0.3)
         ax2.plot(range(1,trialsBeforeDrug+trialsAfterDrug+1),F0,'o-',ms=2,c=mColors[i%10],alpha=0.3)
+        #pdb.set_trace()
+        ax2.plot(range(1,trialsBeforeDrug+1),analysisBAndAD[i][1][n][5][3],'D-',ms=2,c=mColors[i%10],alpha=0.3)
+
 
         ax0.plot(range(trialsBeforeDrug + 1, trialsBeforeDrug + trialsAfterDrug + 1), integral[trialsBeforeDrug:], 'o-', ms=2,c=mColors[i%10],)
         ax1.plot(range(trialsBeforeDrug + 1, trialsBeforeDrug + trialsAfterDrug + 1), activity[trialsBeforeDrug:], 'o-', ms=2,c=mColors[i%10],)
         ax2.plot(range(trialsBeforeDrug + 1, trialsBeforeDrug + trialsAfterDrug + 1), F0[trialsBeforeDrug:], 'o-', ms=2,c=mColors[i%10],)
+        ax2.plot(range(trialsBeforeDrug + 1, trialsBeforeDrug + trialsAfterDrug + 1), analysisBAndAD[i][2][n][5][3], 'D-', ms=2, c=mColors[i % 10], alpha=0.3)
 
     if i==0:
         ax3.axhline(y=0,ls='--',c='0.7')
