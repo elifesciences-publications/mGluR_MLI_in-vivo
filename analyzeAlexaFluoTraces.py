@@ -53,7 +53,7 @@ def readTimeStampOfRecording(tiffFile,nFrame):
 try:
     anim = sys.argv[1]
 except IndexError:
-    anim = 'animal#1_2'
+    anim = 'animal#3'
 else:
     pass
 

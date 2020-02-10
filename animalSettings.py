@@ -46,6 +46,9 @@ class animalSettings:
             self.xOffset =-30.
             self.yOffset = 6.
 
+            self.xOffset820 =0.
+            self.yOffset820 =0.
+
             self.baselinePeriodsBD = [[0, 13]]
             self.baselinePeriodsAD = [[0, 11]]
 
@@ -57,8 +60,8 @@ class animalSettings:
             self.alexaImgList = range(36,50+1)
             self.alexaStartTime = [17,6,0]
 
-            self.minOverlap = 0.5
-            self.minOverlap820 = 0.5
+            self.minOverlap = 0.3
+            self.minOverlap820 = 0.3
             self.intLims = None
 
         elif self.animalID == 'animal#3':
@@ -76,6 +79,9 @@ class animalSettings:
             self.xOffset = 0
             self.yOffset = 0
 
+            self.xOffset820 = 0.
+            self.yOffset820 = 0.
+
             self.baselinePeriodsBD = [[0,5],[6,11]]
             self.baselinePeriodsAD = [[0,8]]
             self.nImgsBD = [[1, '001-000'], [2, '001-001'], [3, '001-002'], [4, '001-003'], [5, '001-004'], [6, '001-005'],[8, '003-000'], [9, '003-001'], [10, '003-002'], [11, '003-003'], [12, '003-004'], [13, '003-005']]  # range(startBD,endBD+1)
@@ -85,8 +91,8 @@ class animalSettings:
             self.alexaImgList = [14,15,16,17,19,21,23,25,27,29,31,33]
             self.alexaStartTime = [12, 55, 0]
 
-            self.minOverlap = 0.4 # fraction of minial ROI overlap to consider the ROIs as identical
-            self.minOverlap820 = 0.4
+            self.minOverlap = 0.3 # fraction of minial ROI overlap to consider the ROIs as identical
+            self.minOverlap820 = 0.3
             self.intLims = None
 
         elif self.animalID == 'animal#2':
@@ -104,7 +110,7 @@ class animalSettings:
             self.cutOffXPub = 49
             self.cutOffYPub = 49
 
-            self.xOffset = 0
+            self.xOffset = -10.
             self.yOffset = 0
 
             self.baselinePeriodsBD = [[0,5]]
@@ -173,6 +179,6 @@ class animalSettings:
             self.alexaImgList = [7, 8, 9, 10, 11, 12, 13, 15, 17, 19, 21, 23, 25]
             self.alexaStartTime = [14, 13, 0]
 
-            self.minOverlap = 0.4 # fraction of minial ROI overlap to consider the ROIs as identical
-            self.minOverlap820 = 0.35
+            self.minOverlap = 0.3 # fraction of minial ROI overlap to consider the ROIs as identical
+            self.minOverlap820 = 0.3
             self.intLims = None

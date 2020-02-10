@@ -11,7 +11,7 @@ import matplotlib.gridspec as gridspec
 try:
     anim = sys.argv[1]
 except IndexError:
-    anim = 'animal#1_2'
+    anim = 'animal#1'
 else:
     pass
 
@@ -62,16 +62,20 @@ warp_mode = cv2.MOTION_TRANSLATION # MOTION_EUCLIDEAN
 
 # Define 2x3 or 3x3 matrices and initialize the matrix to identity
 if warp_mode == cv2.MOTION_HOMOGRAPHY:
-    warp_matrix = np.eye(3, 3, dtype=np.float32)
+    warp_matrix1 = np.eye(3, 3, dtype=np.float32)
+    warp_matrix820 = np.eye(3, 3, dtype=np.float32)
 else:
     warp_matrix1 = np.eye(2, 3, dtype=np.float32)
-    warp_matrix2 = np.eye(2, 3, dtype=np.float32)
+    warp_matrix820 = np.eye(2, 3, dtype=np.float32)
 
 warp_matrix1[0,2] = aS.xOffset
 warp_matrix1[1,2] = aS.yOffset
 
-warp_matrix2[0,2] = 0.
-warp_matrix2[1,2] = 0.
+warp_matrix820[0,2] = aS.xOffset820
+warp_matrix820[1,2] = aS.yOffset820
+
+#warp_matrix2[0,2] = 0.
+#warp_matrix2[1,2] = 0.
 
 # Specify the number of iterations.
 number_of_iterations = 5000;
@@ -85,7 +89,7 @@ criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, number_of_iteration
 
 # Run the ECC algorithm. The results are stored in warp_matrix.
 (cc1, warp_matrix1Ret) = cv2.findTransformECC(imBD, imAD, warp_matrix1, warp_mode, criteria)
-(cc2,warp_matrix2Ret) = cv2.findTransformECC(imBD, im820, warp_matrix2, warp_mode, criteria)
+(cc2,warp_matrix2Ret) = cv2.findTransformECC(imBD, im820, warp_matrix820, warp_mode, criteria)
 
 if warp_mode == cv2.MOTION_HOMOGRAPHY:
     # Use warpPerspective for Homography

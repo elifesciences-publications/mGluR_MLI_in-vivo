@@ -485,5 +485,5 @@ ax1.set_ylabel(r'change in locomotion fluo. after drug ($\Delta F/F_{\rm rest}$)
 
 ########################################################################################
 
-plt.savefig(figOutDir+'WalkingFluorescenceBeforeAfterDrug.pdf')
-plt.savefig(figOutDir+'WalkingFluorescenceBeforeAfterDrug.svg')
+plt.savefig(figOutDir+'WalkingFluorescenceBeforeAfterDrug_2.pdf')
+plt.savefig(figOutDir+'WalkingFluorescenceBeforeAfterDrug_2.svg')

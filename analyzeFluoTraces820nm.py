@@ -198,10 +198,11 @@ for i in range(len(intersectionROIs820)):
             deltaBD = (FBDsingle - F0)
             deltaBDF0 = (FBDsingle-F0)/F0
             activityMask = (tBD > aS.activityTimes[0]) & (tBD < aS.activityTimes[1])
-            integralBD = integrate.simps(deltaBDF0[activityMask], tBD[activityMask])
+            #integralBD = integrate.simps(deltaBDF0[activityMask], tBD[activityMask])
             #integralBD = np.sum(deltaBD)
             FActivityBD = np.std(deltaBDF0[activityMask])
-            beforeDrugAnalysis.append([n,integralBD,FActivityBD,F0,np.column_stack((tBD,FBDsingle,deltaBDF0,deltaBD))])
+            FActivityBDP = np.percentile(deltaBDF0[activityMask], 75)
+            beforeDrugAnalysis.append([n,FActivityBDP,FActivityBD,F0,np.column_stack((tBD,FBDsingle,deltaBDF0,deltaBD))])
             #iE.append(integralBD)
             startNBD += len(timeStampsBD[n][1])
         startN820 = 0
@@ -228,10 +229,11 @@ for i in range(len(intersectionROIs820)):
             activityMask = (t820 > aS.activityTimes[0]) & (t820 < aS.activityTimes[1])
             #pdb.set_trace()
             #print(n)
-            integralAD = integrate.simps(deltaADF0[activityMask],t820[activityMask])
+            #integralAD = integrate.simps(deltaADF0[activityMask],t820[activityMask])
             #integralAD = np.sum(deltaAD[activityMask])
-            FActivityAD = np.std(deltaADF0[activityMask])
-            afterDrugAnalysis.append([n, integralAD, FActivityAD, F0, np.column_stack((t820, FADsingle, deltaADF0, deltaAD))])
+            FActivity820 = np.std(deltaADF0[activityMask])
+            FActivity820P = np.percentile(deltaADF0[activityMask], 75)
+            afterDrugAnalysis.append([n, FActivity820P, FActivity820, F0, np.column_stack((t820, FADsingle, deltaADF0, deltaAD))])
             startN820 += len(timeStamps820[n][1])
         if useInAnalysis:
             analysisBAnd820.append([intersectionROIs820[i],beforeDrugAnalysis,afterDrugAnalysis])

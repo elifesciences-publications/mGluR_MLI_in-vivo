@@ -48,7 +48,7 @@ for a in range(len(animals)):
 ##################################################################
 # Show final results
 
-fig_width = 6 # width in inches
+fig_width = 14 # width in inches
 fig_height = 5  # height in inches
 fig_size =  [fig_width,fig_height]
 params = {'axes.labelsize': 11,
@@ -70,7 +70,7 @@ rcParams.update(params)
 fig = plt.figure()
 
 # define sub-panel grid and possibly width and height ratios
-gs = gridspec.GridSpec(1, 1,
+gs = gridspec.GridSpec(1, 2,
                        #width_ratios=[1.5,1],
                        #height_ratios=[1,1,2.5,1]
                        )
@@ -78,7 +78,7 @@ gs = gridspec.GridSpec(1, 1,
 gs.update(wspace=0.3,hspace=0.25)
 
 # possibly change outer margins of the figure
-plt.subplots_adjust(left=0.15, right=0.9, top=0.9, bottom=0.15)
+plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.15)
 
 plt.figtext(0.06, 0.95, 'summary of fluctuations during 910 and 820 nm runs', clip_on=False, color='black', size=12)
 
@@ -111,7 +111,8 @@ for a in range(len(animals)): # loop over all animals
     aa.append(ratioPerAnimal)
 #print(a,b)
 #pdb.set_trace()
-ax1.boxplot(aa)
+ax1.axhline(y=0,ls='--',c='0.5')
+ax1.boxplot(aa,showfliers=False)
 #ax1.plot(a+(np.random.rand(len(ratioPerAnimal))-0.5)*0.2,ratioPerAnimal,symbols[a],ms=3,c='0.5')
 #ax1.plot(a,np.mean(ratioPerAnimal),symbols[a],ms=5,c='C0')
 
@@ -123,6 +124,60 @@ ax1.xaxis.set_ticks_position('bottom')
 ax1.spines['left'].set_position(('outward', 10))
 ax1.yaxis.set_ticks_position('left')
 ax1.set_ylabel('STD ratio (820 nm/910 nm before drug)')
+majorLocator_x = plt.MultipleLocator(1)
+ax1.xaxis.set_major_locator(majorLocator_x)
+labels = [item.get_text() for item in ax1.get_xticklabels()]
+print(labels)
+for i in range(len(animals)):
+    print(i)
+    labels[i+1] = animals[i]
+#labels[1] = 'before'
+#labels[2] = 'after'
+ax1.set_xticklabels(labels)
+
+
+
+ax1 = plt.subplot(gs[1]) ############################################################
+#a = [0,3]
+#ax1.plot(a,a,c='0.5')
+symbols = ['o','v','>','s','D']
+#ax1.axhline(y=0,ls='--',c='0.5')
+#cum = []
+#nAnimal = 0
+#for n in range(len(allData)):
+aa = []
+for a in range(len(animals)): # loop over all animals
+    ratioPerAnimal = []
+    for b in range(len(allData[a])): # loop over all intersection ROIs
+        stdBD = []
+        std820= []
+        print('%s pre-durg and %s recording at 820' %(len(allData[a][b][1]),len(allData[a][b][2])))
+        for c in range(len(allData[a][b][1])): # loop over all pre-drug ROIs
+            #pdb.set_trace()
+            stdBD.append(allData[a][b][1][c][1])
+        for d in range(len(allData[a][b][2])): # loop over all 820 ROIs
+            #pdb.set_trace()
+            std820.append(allData[a][b][2][d][1])
+        ratio = np.mean(std820)/np.mean(stdBD)
+        ratioPerAnimal.append(ratio)
+    ratioPerAnimal = np.asarray(ratioPerAnimal)
+    ratioPerAnimal = ratioPerAnimal[np.abs(ratioPerAnimal)<30]
+    aa.append(ratioPerAnimal)
+#print(a,b)
+#pdb.set_trace()
+ax1.axhline(y=0,ls='--',c='0.5')
+ax1.boxplot(aa,showfliers=False)
+#ax1.plot(a+(np.random.rand(len(ratioPerAnimal))-0.5)*0.2,ratioPerAnimal,symbols[a],ms=3,c='0.5')
+#ax1.plot(a,np.mean(ratioPerAnimal),symbols[a],ms=5,c='C0')
+
+#ax1.plot(activityEv[:,0],activityEv[:,1],'o',ms=2,alpha=0.5)
+ax1.spines['top'].set_visible(False)
+ax1.spines['right'].set_visible(False)
+ax1.spines['bottom'].set_position(('outward', 10))
+ax1.xaxis.set_ticks_position('bottom')
+ax1.spines['left'].set_position(('outward', 10))
+ax1.yaxis.set_ticks_position('left')
+ax1.set_ylabel('75th percentile ratio (820 nm/910 nm before drug)')
 majorLocator_x = plt.MultipleLocator(1)
 ax1.xaxis.set_major_locator(majorLocator_x)
 labels = [item.get_text() for item in ax1.get_xticklabels()]
