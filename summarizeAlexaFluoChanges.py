@@ -19,7 +19,7 @@ from scipy.stats import linregress
 
 dataOutDir = 'dataOutput/'
 figOutDir = 'figureOutput/'
-
+pubOutDir = 'publicationFigures/'
 # animalID = 'animal#1'
 # #baseDir = '/media/labo_rw/JINmGluR/'
 # baseDir = '/home/mgraupe/'
@@ -31,7 +31,7 @@ figOutDir = 'figureOutput/'
 # read data and determine principal parameters
 
 #allData = [trialsBeforeDrug,trialsAfterDrug,integral,activity,integralEv,activityEv,F0Ev]
-animals = ['animal#1','animal#3','animal#2','animal#4','animal#1_2']
+animals = ['animal#1','animal#1_2','animal#2','animal#3','animal#4']
 #animals = ['animal#3','animal#2','animal#4','animal#1_2']
 
 allData = []
@@ -39,7 +39,8 @@ fitData = np.zeros(2)
 for a in range(len(animals)):
     aD = pickle.load(open( dataOutDir + 'analysisOfAlexaRecordings_%s.p' % animals[a], 'rb' ) )
     allData.append([a,animals[a],aD])
-    fitData = np.vstack((fitData,np.column_stack((aD[:,1],aD[:,2]))))
+    if animals[a] != 'animal#1':
+        fitData = np.vstack((fitData,np.column_stack((aD[:,1],aD[:,2]))))
 fitData = fitData[1:]
 
 mask = fitData[:,0]>0.
@@ -66,11 +67,11 @@ yy = fitfunc(p1Int,tt)
 fig_width = 7 # width in inches
 fig_height = 5  # height in inches
 fig_size =  [fig_width,fig_height]
-params = {'axes.labelsize': 11,
-          'axes.titlesize': 11,
-          'font.size': 11,
-          'xtick.labelsize': 11,
-          'ytick.labelsize': 11,
+params = {'axes.labelsize': 12,
+          'axes.titlesize': 12,
+          'font.size': 12,
+          'xtick.labelsize': 12,
+          'ytick.labelsize': 12,
           'figure.figsize': fig_size,
           'savefig.dpi' : 600,
           'axes.linewidth' : 1.3,
@@ -93,21 +94,21 @@ gs = gridspec.GridSpec(1,1,
 gs.update(wspace=0.3,hspace=0.25)
 
 # possibly change outer margins of the figure
-plt.subplots_adjust(left=0.15, right=0.9, top=0.9, bottom=0.15)
+plt.subplots_adjust(left=0.11, right=0.95, top=0.95, bottom=0.15)
 
-plt.figtext(0.06, 0.95, 'summary of Alexa 594 fluorescence changes across all animals', clip_on=False, color='black', size=12)
+#plt.figtext(0.06, 0.95, 'summary of Alexa 594 fluorescence changes across all animals', clip_on=False, color='black', size=12)
 
-
+animalLabels = ['animal#1A','animal#1','animal#2','animal#3','animal#4']
 ax1 = plt.subplot(gs[0]) ############################################################
 #a = [0,3]
 #ax1.plot(a,a,c='0.5')
 symbols = ['o','v','>','s','D']
 ax1.axvline(x=0,ls='--',c='0.5')
-
+cc = ['0.6','C0','C1','C2','C3']
 for n in range(len(allData)):
-    ax1.errorbar(allData[n][2][:,1],allData[n][2][:,2],allData[n][2][:,3],fmt='o-',ms=2,label='%s' % allData[n][1])
+    ax1.errorbar(allData[n][2][:,1],allData[n][2][:,2],allData[n][2][:,3],fmt='o-',c=cc[n],ms=2,label='%s' % animalLabels[n])
 
-ax1.plot(tt,yy,c='k',lw=3,label=r'$\tau = %s$ s' % np.round(p1Int[1],1))
+ax1.plot(tt,yy,c='k',lw=3,label=r'exp. fit : $\tau = %s$ min' % np.round(p1Int[1],1))
 #ax1.plot(activityEv[:,0],activityEv[:,1],'o',ms=2,alpha=0.5)
 ax1.spines['top'].set_visible(False)
 ax1.spines['right'].set_visible(False)
@@ -115,17 +116,22 @@ ax1.spines['bottom'].set_position(('outward', 10))
 ax1.xaxis.set_ticks_position('bottom')
 ax1.spines['left'].set_position(('outward', 10))
 ax1.yaxis.set_ticks_position('left')
-plt.legend()
 
-ax1.set_xlabel('time from Alex 594 application (min)')
-ax1.set_ylabel('raw fluorescence')
+plt.legend(loc=(0.02,0.65))
+# change legend text size
+leg = plt.gca().get_legend()
+ltext  = leg.get_texts()
+plt.setp(ltext, fontsize=10)
+
+ax1.set_xlabel('Time since Alex 594 application (min)')
+ax1.set_ylabel('Raw fluorescence')
 #ax1.set_xlim(-2,10)
 #ax1.set_ylim(-10,5)
 
 
 
 
-plt.savefig(figOutDir+'SummaryAlexa594FluorescenceChanges_%sExperiments.pdf' % len(animals))
+plt.savefig(pubOutDir+'SummaryAlexa594FluorescenceChanges_publication.pdf')
 #plt.savefig(figOutDir+'FluorescenceTraces_%s.png' % animalID)
 #plt.show()
 

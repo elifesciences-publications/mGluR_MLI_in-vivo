@@ -19,6 +19,7 @@ from scipy.stats import linregress
 
 dataOutDir = 'dataOutput/'
 figOutDir = 'figureOutput/'
+pubOutDir = 'publicationFigures/'
 
 # animalID = 'animal#1'
 # #baseDir = '/media/labo_rw/JINmGluR/'
@@ -31,7 +32,7 @@ figOutDir = 'figureOutput/'
 # read data and determine principal parameters
 
 #allData = [trialsBeforeDrug,trialsAfterDrug,integral,activity,integralEv,activityEv,F0Ev]
-animals = ['animal#1','animal#3','animal#2','animal#4','animal#1_2']
+animals = ['animal#1_2','animal#2','animal#3','animal#4',]
 #animals = ['animal#3','animal#2','animal#4','animal#1_2']
 
 allData = []
@@ -48,14 +49,14 @@ for a in range(len(animals)):
 ##################################################################
 # Show final results
 
-fig_width = 14 # width in inches
+fig_width = 13 # width in inches
 fig_height = 5  # height in inches
 fig_size =  [fig_width,fig_height]
-params = {'axes.labelsize': 11,
+params = {'axes.labelsize': 12,
           'axes.titlesize': 11,
           'font.size': 11,
-          'xtick.labelsize': 11,
-          'ytick.labelsize': 11,
+          'xtick.labelsize': 12,
+          'ytick.labelsize': 12,
           'figure.figsize': fig_size,
           'savefig.dpi' : 600,
           'axes.linewidth' : 1.3,
@@ -78,9 +79,11 @@ gs = gridspec.GridSpec(1, 2,
 gs.update(wspace=0.3,hspace=0.25)
 
 # possibly change outer margins of the figure
-plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.15)
+plt.subplots_adjust(left=0.08, right=0.96, top=0.9, bottom=0.15)
 
-plt.figtext(0.06, 0.95, 'summary of fluctuations during 910 and 820 nm runs', clip_on=False, color='black', size=12)
+#plt.figtext(0.06, 0.95, 'summary of fluctuations during 910 and 820 nm runs', clip_on=False, color='black', size=12)
+plt.figtext(0.01, 0.91, 'A',clip_on=False,color='black', weight='bold',size=28)
+plt.figtext(0.48, 0.91, 'B',clip_on=False,color='black', weight='bold',size=28)
 
 
 ax1 = plt.subplot(gs[0]) ############################################################
@@ -130,7 +133,10 @@ labels = [item.get_text() for item in ax1.get_xticklabels()]
 print(labels)
 for i in range(len(animals)):
     print(i)
-    labels[i+1] = animals[i]
+    if i == 0:
+        labels[i+1] = 'animal#1'
+    else:
+        labels[i+1] = animals[i]
 #labels[1] = 'before'
 #labels[2] = 'after'
 ax1.set_xticklabels(labels)
@@ -184,7 +190,10 @@ labels = [item.get_text() for item in ax1.get_xticklabels()]
 print(labels)
 for i in range(len(animals)):
     print(i)
-    labels[i+1] = animals[i]
+    if i == 0:
+        labels[i+1] = 'animal#1'
+    else:
+        labels[i+1] = animals[i]
 #labels[1] = 'before'
 #labels[2] = 'after'
 ax1.set_xticklabels(labels)
@@ -195,7 +204,7 @@ ax1.set_xticklabels(labels)
 
 
 
-plt.savefig(figOutDir+'Summary820Fluctuations.pdf')
+plt.savefig(pubOutDir+'Summary820Fluctuations.pdf')
 #plt.savefig(figOutDir+'FluorescenceTraces_%s.png' % animalID)
 #plt.show()
 

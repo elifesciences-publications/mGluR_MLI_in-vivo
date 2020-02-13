@@ -280,7 +280,7 @@ for n in range(len(recordingsAD)):
     ax1.spines['right'].set_visible(False)
     ax1.spines['bottom'].set_position(('outward', 10))
     ax1.xaxis.set_ticks_position('bottom')
-    ax1.set_xlabel('time (s)')
+    ax1.set_xlabel('Time (s)')
     if n == 0:
         ax1.spines['left'].set_position(('outward', 10))
         ax1.yaxis.set_ticks_position('left')
@@ -321,8 +321,8 @@ ax0.spines['bottom'].set_position(('outward', 10))
 ax0.xaxis.set_ticks_position('bottom')
 ax0.spines['left'].set_position(('outward', 10))
 ax0.yaxis.set_ticks_position('left')
-ax0.set_xlabel('recording number')
-ax0.set_ylabel(r'locomotion fluorescence ($\Delta F/F_{\rm rest}$)')
+ax0.set_xlabel('Recording number')
+ax0.set_ylabel(r'Locomotion fluorescence ($\Delta F/F_{\rm rest}$)')
 majorLocator_x = plt.MultipleLocator(1)
 ax0.xaxis.set_major_locator(majorLocator_x)
 bracket = ax0.annotate('', xy=(1, 9),  xycoords='data', annotation_clip=False,
@@ -358,8 +358,8 @@ ax1.spines['bottom'].set_position(('outward', 10))
 ax1.xaxis.set_ticks_position('bottom')
 ax1.spines['left'].set_position(('outward', 10))
 ax1.yaxis.set_ticks_position('left')
-ax1.set_xlabel('recording number')
-ax1.set_ylabel(r'normalized locomotion fluorescence ($\Delta F/F_{\rm rest}$)')
+ax1.set_xlabel('Recording number')
+ax1.set_ylabel(r'Normalized locomotion fluorescence ($\Delta F/F_{\rm rest}$)')
 ax1.xaxis.set_major_locator(majorLocator_x)
 
 
@@ -426,7 +426,8 @@ for i in ROIIDs:
 # summary of all animals
 
 #allData = [trialsBeforeDrug,trialsAfterDrug,integral,activity,integralEv,activityEv,F0Ev]
-animals = ['animal#1','animal#3','animal#2','animal#4','animal#1_2']
+#animals = ['animal#1','animal#3','animal#2','animal#4','animal#1_2']
+animals = ['animal#3','animal#2','animal#4','animal#1_2']
 
 allData = []
 for a in range(len(animals)):
@@ -449,11 +450,11 @@ for a in range(len(animals)):
     for i in range(len(allData[5])):
         #pdb.set_trace()
         if allData[5][i,2]<0.01 and allData[5][i,3] == 1:
-            ax1.plot(allData[5][i,0],allData[5][i,1],symbols[nAnimal],ms=5,c='blue')
+            ax1.plot(allData[5][i,0],allData[5][i,1],symbols[nAnimal],ms=7,c='blue')
         elif allData[5][i,2]<0.01 and allData[5][i,3] == 0:
-            ax1.plot(allData[5][i,0],allData[5][i,1],symbols[nAnimal],ms=5,c='red')
+            ax1.plot(allData[5][i,0],allData[5][i,1],symbols[nAnimal],ms=7,c='red')
         else:
-            ax1.plot(allData[5][i,0],allData[5][i,1],symbols[nAnimal],c='gray',ms=5,alpha=0.5)
+            ax1.plot(allData[5][i,0],allData[5][i,1],symbols[nAnimal],c='gray',ms=7,alpha=0.5)
         cum.append((allData[5][i,0],allData[5][i,1]))
         nROIs+=1
     nAnimal +=1
@@ -466,7 +467,7 @@ meanBefore = cum[:,0][mask]
 ax1.plot(meanBefore,out[1]+out[0]*meanBefore,c='0.6')
 
 print(out)
-text11 = ax1.annotate(r'R$^2$ = %s, p < 0.0001' %(np.round(out[2]**2,3)) , xy=(0,-6), annotation_clip=False,
+text11 = ax1.annotate(r'$r= %s$, R$^2$ = %s, p < 0.0001' %(np.round(out[2],3),np.round(out[2]**2,3)) , xy=(0,-6), annotation_clip=False,
            xytext=None, textcoords='data',fontsize=16,
            arrowprops=None
            )
@@ -477,8 +478,8 @@ ax1.spines['bottom'].set_position(('outward', 10))
 ax1.xaxis.set_ticks_position('bottom')
 ax1.spines['left'].set_position(('outward', 10))
 ax1.yaxis.set_ticks_position('left')
-ax1.set_xlabel(r'locomotion fluorescence before drug ($\Delta F/F_{\rm rest}$)')
-ax1.set_ylabel(r'change in locomotion fluo. after drug ($\Delta F/F_{\rm rest}$)')
+ax1.set_xlabel(r'Locomotion fluorescence before drug ($\Delta F/F_{\rm rest}$)')
+ax1.set_ylabel(r'Change in locomotion fluo. after drug ($\Delta F/F_{\rm rest}$)')
 #ax1.set_xlim(-2,10)
 #ax1.set_ylim(-10,5)
 
