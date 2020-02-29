@@ -191,9 +191,9 @@ for n in ROIIDs:
 
 #ax1.imshow(imMaskBD,cmap='gist_ncar')
 
-ax1.plot([270,395],[370,370],lw=8,c='k')
+ax1.plot([265,390],[400,400],lw=8,c='w')
 layoutOfPanel(ax1,xyInvisible=[True,True])
-text11 = ax1.annotate(r'100 $\mu$m', xy=(295,395), annotation_clip=False,
+text11 = ax1.annotate(r'100 $\mu$m', xy=(295,435), annotation_clip=False,
            xytext=None, textcoords='data',fontsize=18,color='k',
            arrowprops=None
            )
