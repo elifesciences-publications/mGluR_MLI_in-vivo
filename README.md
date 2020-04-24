@@ -12,16 +12,16 @@ For more details, please refer to :
 
 **Jinn Bao, Michael Graupner, Guadalupe Astorga, Thibault Collin, Abdelali Jalil, Dwi Wahyu Indriati, Jonathan Bradley, 
 Ryuichi Shigemoto and Isabel Llano (2020).**
-Synergistic action of metabotropic and ionotropic glutamate receptors in cerebellar molecular layer interneurons in vivo. 
+***Synergistic action of metabotropic and ionotropic glutamate receptors in cerebellar molecular layer interneurons in vivo.*** 
 
 
 Individual analsyis steps and scripts 
 -----------
 
-Experiments were done on ''four different animals'' in five different recording sessions. All animal specfic settings and analysis 
+Experiments were done on **four different animals** in **five different recording sessions**. All animal specfic settings and analysis 
 parameters are stored in the ```animalSettings.py``` file. 
 
-### Alignment of images : '''python alignImages.py'''
+### Alignment of images : ```python alignImages.py```
 
 This scripts uses the average image before and after drug application. 
 
