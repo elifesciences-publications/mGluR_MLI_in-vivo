@@ -2,10 +2,9 @@
 Analysis scripts of calcium imaging in locomoting mice 
 ==============================
 
-The repository contains custom written Python scripts used to extract calcium transients during forced locomotion. 
-
-The here published python scripts implement the steps and calculation to obtain **locomotion fluorescence** as depicted in Fig. 3 
- of the publication below. 
+The repository contains custom written Python scripts used to extract and analyze calcium fluorescent traces during forced locomotion.
+Calcium imaging was performed before and after application of a mGluR anatagonist.  The here published Python scripts implement 
+the steps and calculation to obtain **locomotion fluorescence** as depicted in Fig. 3  of the publication below. 
 
 For more details, please refer to :
 
@@ -18,22 +17,25 @@ Raw data can be obtained upon request.
 Individual analsyis steps and scripts 
 -----------
 
-Experiments were done on **four different animals** in **five different recording sessions**. All animal specfic settings and analysis 
-parameters are stored in the ```animalSettings.py``` file. The recording to be analyzed can be specified in the header of the scripts
-or given as an input arguments. Possible recordings are : ```animal#1, animal#3, animal#2, animal#4, animal#1_2``` . 
+Experiments were done on **four different animals** in **five recording sessions**. All animal-specfic settings and analysis 
+parameters are stored in the ```animalSettings.py``` file. The recording to be analyzed can be specified in the header of the scripts 
+below or given as an input arguments. Possible recordings are : ```animal#1, animal#3, animal#2, animal#4, animal#1_2``` , e.g. 
+```python alignImages.py animal#1```. 
 
 ### Alignment of images : ```alignImages.py```
 
 This scripts uses the average images from before and after drug application, as well as from before drug application and the recording 
-at 820 nm laser stimulation wavelength. Image pairs are aligned using the openCV ```warpAffine``` function. Alignment ouptut is 
-presented in a figure, e.g. [ImageAlignment_animal#2](figureOutput/ImageAlignment_animal%232.pdf). 
+at 820 nm laser stimulation wavelength. Image pairs are aligned using the openCV 
+[```warpAffine```](https://docs.opencv.org/2.4/modules/imgproc/doc/geometric_transformations.html?highlight=warpaffine) function. 
+Alignment output is presented in a figure, e.g. [ImageAlignment_animal#2](figureOutput/ImageAlignment_animal%232.pdf). 
 
 ```python
 python alignImages.py
 ```
 ### ROI matching : ```matchROIs.py```
 
-Using the algined fluorescent images, individual ROIs are indentified to represent the same cell body based on their overlap fraction.
+Using the aligned fluorescent images, individual ROIs are identified to represent the same cell body before and 
+ after drug application based on their fractional overlap.
 ROI matching output is presented in a figure, e.g.  [ROImatching_animal#2](figureOutput/ROImatching_animal%232.pdf). 
 
 ```python
@@ -42,7 +44,8 @@ python matchROIs.py
 
 ### Obtain timing information of the 2-photon imaging stacks : ```readExtractTimeStamps.py```
 
-The timing information of individal fluorescent frames recorded with ScanImage are read and saved in pickle files for further analysis. 
+The timing information of individual fluorescent frames recorded with ScanImage are read and 
+saved in pickle files for further analysis. 
 
 ```python
 python readExtractTimeStamps.py
@@ -51,7 +54,8 @@ python readExtractTimeStamps.py
 ### Extracting locomotion fluorescence : ```analyzeFluoTraces.py```
 
 This script contains the core fluorescent trace analysis. Baseline fluorescence is determined based on the pre-motorization
-baseline. Delta F over F baseline is calculated per ROI. The fluorescence during the forced locomotion period is extracted. 
+activity. Delta F over F baseline is calculated per ROI. 
+The fluorescence during the forced locomotion period is extracted  before and after drug application.
 The decay in fluorescence across locomotion sessions is removed based on the recordings before drug application. See 
 [FluorescenceTraces_animal#2](figureOutput/FluorescenceTraces_animal%232.pdf) for an example output figure. 
 
@@ -80,7 +84,8 @@ python summarize820Fluctuations.py
 
 ### Analyzing the fluorescence increase from Alexa 594 delivered with drug  : ```analyzeAlexaFluoTraces.py```
 
-In this script the raw red fluorescence from Alexa 594 is extracted as function of drug solution application time. Alexa 594 was added
+In this script the raw red fluorescence from Alexa 594 is extracted from the calcium imaging data 
+ as function of drug solution application time. Alexa 594 was added
   to the drug containing ACSF solution in order to assess drug access to the imaged area.  
 See [Alexa594FluorescenceTraces_animal#2](figureOutput/Alexa594FluorescenceTraces_animal%232.pdf) for an example output figure. 
 
@@ -93,11 +98,20 @@ python analyzeAlexaFluoTraces.py
 
 ### Run scripts in a batch : ```runAllScripts.py```
 
-All scripts can be run in a batch using the ```runAllScripts.py``` file. The recording(s) to be analyzed is specified through a list 
-in that file. 
+All scripts can be run in a batch using the ```runAllScripts.py``` file. The recording(s) to be analyzed is (are) specified
+ through a list  in that file. 
 
 ```python
 python analyzeFluoTraces.py
+```
+
+### Generation of the publication figure : ```generatePublicationFigure.py```
+
+The figure illustrating the forced locomotion experiment, depicting example data and summarizing the results obtained from all 
+recordings is generated with that script. 
+
+```python
+python generatePublicationFigure.py
 ```
 
 Requires
