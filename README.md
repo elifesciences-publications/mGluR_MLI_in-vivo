@@ -54,8 +54,12 @@ baseline. Delta F over F baseline is calculated per ROI. The fluorescence during
 The decay in fluorescence across locomotion sessions is removed based on the recordings before drug application. See 
 figureOutput/FluorescenceTraces_animal#2.pdf for an example output figure. 
 
+Data across recordings is collected and summarized using ```analyzeAlexaFluoTraces.py```. See 
+[SummaryFluorescenceChanges](figureOutput/SummaryFluorescenceChanges.pdf) figure. 
+
 ```python
 python analyzeFluoTraces.py
+python analyzeAlexaFluoTraces.py 
 ```
 
 ### Comparing fluorescence dynamics during 910 nm and 820 nm runs : ```analyzeFluoTraces820nm.py```
@@ -65,8 +69,12 @@ stimulation. GCaMP fluorescence is not sensitive to calcium at 820 nm which allo
 stimulation wavelength. 
 See [FluorescenceTraces820_animal#2](figureOutput/FluorescenceTraces820_animal%232.pdf) for an example output figure. 
 
+Data across recordings is collected and summarized using ```summarize820Fluctuations.py```. See 
+[Summary820Fluctuations](figureOutput/Summary820Fluctuations.pdf) figure. 
+
 ```python
 python analyzeFluoTraces820nm.py
+python summarize820Fluctuations.py
 ```
 
 ### Analyzing the fluorescence increase from Alexa 594 delivered with drug  : ```analyzeAlexaFluoTraces.py```
@@ -74,6 +82,9 @@ python analyzeFluoTraces820nm.py
 In this script the raw red fluorescence from Alexa 594 is extracted as function of drug solution application time. Alexa 594 was added
   to the drug containing ACSF solution in order to assess drug access to the imaged area.  
 See [Alexa594FluorescenceTraces_animal#2](figureOutput/Alexa594FluorescenceTraces_animal%232.pdf) for an example output figure. 
+
+Data across recordings is collected and summarized using ```summarizeAlexaFluoChanges.py```. See 
+[SummaryAlexa594FluorescenceChanges](figureOutput/SummaryAlexa594FluorescenceChanges_5Experiments.pdf) figure. 
 
 ```python
 python analyzeAlexaFluoTraces.py
