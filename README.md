@@ -4,7 +4,8 @@ Analysis scripts of calcium imaging in locomoting mice
 
 The repository contains custom written Python scripts used to extract and analyze calcium fluorescent traces during forced locomotion.
 Calcium imaging was performed before and after application of a mGluR anatagonist.  The here published Python scripts implement 
-the steps and calculation to obtain **locomotion fluorescence** as depicted in Fig. 3  of the publication below. 
+the steps and calculation to obtain **locomotion fluorescence** as depicted in Fig. 3  of the publication below. The auxiliary graphics
+functions assembled in ```generatePublicationFigure``` are used by multiple scripts below. 
 
 For more details, please refer to :
 
