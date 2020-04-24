@@ -7,13 +7,13 @@ The repository contains custom written Python scripts used to extract calcium tr
 The here published python scripts implement the steps and calculation to obtain **locomotion fluorescence** as depicted in Fig. 3 
  of the publication below. 
 
-
 For more details, please refer to :
 
 Jinn Bao, Michael Graupner, Guadalupe Astorga, Thibault Collin, Abdelali Jalil, Dwi Wahyu Indriati, Jonathan Bradley, 
 Ryuichi Shigemoto and Isabel Llano **(2020)**.
 *Synergistic action of metabotropic and ionotropic glutamate receptors in cerebellar molecular layer interneurons in vivo.* 
 
+Raw data can be obtained upon request. 
 
 Individual analsyis steps and scripts 
 -----------
@@ -26,14 +26,15 @@ or given as an input arguments. Possible recordings are : ```animal#1, animal#3,
 
 This scripts uses the average images from before and after drug application, as well as from before drug application and the recording 
 at 820 nm laser stimulation wavelength. Image pairs are aligned using the openCV ```warpAffine``` function. Alignment ouptut is 
-presented in a figure (e.g. figureOutput/ImageAlignment_animal#2.pdf). 
+presented in a figure, e.g. [ImageAlignment_animal#2](figureOutput/ImageAlignment_animal%232.pdf). 
 
 ```python
 python alignImages.py
 ```
 ### ROI matching : ```matchROIs.py```
 
-Using the algined fluorescent images, individual ROIs are indentified to represent the same cell body based on their overlap fraction. 
+Using the algined fluorescent images, individual ROIs are indentified to represent the same cell body based on their overlap fraction.
+ROI matching output is presented in a figure, e.g.  [ROImatching_animal#2](figureOutput/ROImatching_animal%232.pdf). 
 
 ```python
 python matchROIs.py
@@ -52,7 +53,7 @@ python readExtractTimeStamps.py
 This script contains the core fluorescent trace analysis. Baseline fluorescence is determined based on the pre-motorization
 baseline. Delta F over F baseline is calculated per ROI. The fluorescence during the forced locomotion period is extracted. 
 The decay in fluorescence across locomotion sessions is removed based on the recordings before drug application. See 
-figureOutput/FluorescenceTraces_animal#2.pdf for an example output figure. 
+[FluorescenceTraces_animal#2](figureOutput/FluorescenceTraces_animal%232.pdf) for an example output figure. 
 
 Data across recordings is collected and summarized using ```analyzeAlexaFluoTraces.py```. See 
 [SummaryFluorescenceChanges](figureOutput/SummaryFluorescenceChanges.pdf) figure. 
