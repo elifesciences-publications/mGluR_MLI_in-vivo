@@ -1,12 +1,10 @@
 
-Analysis scripts of calcium imaging data in locomoting mice 
+Analysis scripts of calcium imaging in locomoting mice 
 ==============================
 
 The repository contains custom written Python scripts used to extract calcium transients during forced locomotion. 
 
-In the calcium-based plasticity model, pre- and postsynaptic spike induce calcium transients. Synaptic depression or potentiation is induced whenever the compound calcium trace crosses the depression or the potentiation threshold, respectively. 
-
-The here published python scripts implement the steps and calculation to obtain '''locomotion fluorescence''' as depicted in Fig. 3 
+The here published python scripts implement the steps and calculation to obtain **locomotion fluorescence** as depicted in Fig. 3 
  of the publication below. 
 
 
