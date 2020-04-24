@@ -63,7 +63,7 @@ python analyzeFluoTraces.py
 In this script the locomotion fluorescence dynamics is compared between imaging runs at 910 nm and 820 nm laser wavelength 
 stimulation. GCaMP fluorescence is not sensitive to calcium at 820 nm which allows to assess movement artifacts at this 
 stimulation wavelength. 
-See [FluorescenceTraces820_animal#2](figureOutput/FluorescenceTraces820_animal#2.pdf) for an example output figure. 
+See [FluorescenceTraces820_animal#2](figureOutput/FluorescenceTraces820_animal%232.pdf) for an example output figure. 
 
 ```python
 python analyzeFluoTraces820nm.py
@@ -73,7 +73,7 @@ python analyzeFluoTraces820nm.py
 
 In this script the raw red fluorescence from Alexa 594 is extracted as function of drug solution application time. Alexa 594 was added
   to the drug containing ACSF solution in order to assess drug access to the imaged area.  
-See [Alexa594FluorescenceTraces_animal#2](figureOutput/Alexa594FluorescenceTraces_animal#2.pdf) for an example output figure. 
+See [Alexa594FluorescenceTraces_animal#2](figureOutput/Alexa594FluorescenceTraces_animal%232.pdf) for an example output figure. 
 
 ```python
 python analyzeAlexaFluoTraces.py
