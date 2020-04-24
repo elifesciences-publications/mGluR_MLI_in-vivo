@@ -134,6 +134,7 @@ ax1 = plt.subplot(gs[1]) #######################################################
 #ax1.plot(a,a,c='0.5')
 ax1.axhline(y=0,ls='--',c='0.5')
 allPairs = []
+allSigPairs = []
 nAnimal = 0
 #for n in range(len(allData)):
 for a in range(len(animals)):
@@ -142,10 +143,19 @@ for a in range(len(animals)):
         #pdb.set_trace()
         ax1.plot([1,2], [allData[5][i, 4],allData[5][i, 5]], '%s-' % symbols[nAnimal],lw=0.5, ms=3, c='C0',alpha=0.2)
         allPairs.append([allData[5][i, 4],allData[5][i, 5]])
+        if allData[5][i,2]<0.01 and allData[5][i,3] == 1:
+            allSigPairs.append([allData[5][i, 4],allData[5][i, 5]])
     nAnimal+=1
 
 allPairs = np.asarray(allPairs)
+allSigPairs = np.asarray(allSigPairs)
 ptt  = stats.ttest_rel(allPairs[:,0],allPairs[:,1])
+print('mean before :',np.mean(allPairs[:,0]))
+print('SEM before :',scipy.stats.sem(allPairs[:,0]))
+print('mean before (with significant drug effect) :',np.mean(allSigPairs[:,0]))
+print('SEM before (with significant drug effect) :',scipy.stats.sem(allSigPairs[:,0]))
+print('mean after :',np.mean(allPairs[:,1]))
+print('SEM after :',scipy.stats.sem(allPairs[:,1]))
 print('paired t-test :',ptt)
 mask = allPairs[:,0] > 1
 ptt2  = stats.ttest_rel(allPairs[:,0][mask],allPairs[:,1][mask])
